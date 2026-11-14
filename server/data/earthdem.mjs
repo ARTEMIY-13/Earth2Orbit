@@ -4,27 +4,28 @@
 // Grids stay in geographic lat/lon on WGS84 (correct for Earth); ground spacing
 // is computed with WGS84 radii of curvature (shared/terrain/georef.js).
 import { openCOG } from "./geotiff.mjs";
+import { bi } from "../../shared/i18n/bilingual.js";
 
 export const EARTH_SOURCES = {
   copernicus: {
     title: "Copernicus DEM GLO-30 (COG, AWS Open Data)",
     host: "copernicus-dem-30m.s3.amazonaws.com",
     version: "GLO-30 public release (2021/2022 tiles as served on AWS)",
-    datum: { kind: "geoid", model: "EGM2008", description: "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)." },
-    surface: "DSM — поверхня з будівлями й рослинністю, не «голий ґрунт»",
-    verticalAccuracy: "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+    datum: { kind: "geoid", model: "EGM2008", description: "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)." },
+    surface: "DSM — surface including buildings and vegetation, not bare earth",
+    verticalAccuracy: "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
     license:
-      "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+      "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     doc: "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
   },
   nasadem: {
     title: "NASADEM HGT v001 (COG, Microsoft Planetary Computer)",
     host: "nasademeuwest.blob.core.windows.net",
     version: "NASADEM_HGT v001 (NASA JPL, 2020)",
-    datum: { kind: "geoid", model: "EGM96", description: "Висоти над геоїдом EGM96 (NASADEM_HGT)." },
-    surface: "Радарна поверхня SRTM (переоброблена), частково DSM",
-    verticalAccuracy: "NASADEM (переоброблений SRTM 2000 р.): типово кілька метрів, гірше на крутих схилах і в радарних тінях; заповнені прогалини мають нижчу точність.",
-    license: "Дані NASA — без обмежень на використання. Цитування: NASA JPL (2020), NASADEM Merged DEM Global 1 arc second V001, NASA EOSDIS LP DAAC, doi:10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001.",
+    datum: { kind: "geoid", model: "EGM96", description: "Heights above the EGM96 geoid (NASADEM_HGT)." },
+    surface: "SRTM radar surface (reprocessed), partly DSM",
+    verticalAccuracy: "NASADEM (reprocessed SRTM, Feb 2000): typically a few metres; worse on steep slopes and in radar shadow; void-filled areas are less accurate.",
+    license: "NASA data — no restrictions on use. Citation: NASA JPL (2020), NASADEM Merged DEM Global 1 arc second V001, NASA EOSDIS LP DAAC, doi:10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001.",
     doc: "https://planetarycomputer.microsoft.com/dataset/nasadem",
   },
 };
@@ -73,7 +74,7 @@ async function cog(url, fetcher, signal) {
 /** Native-resolution mosaic window from 1°×1° tiles (PixelIsPoint, centres on integer seconds). */
 async function nativeMosaic({ urlFor, latC, lonC, width, height, fetcher, signal }) {
   const first = await cog(urlFor(Math.floor(latC), Math.floor(lonC)), fetcher, signal);
-  if (!first) throw new Error("У цій точці немає тайла DEM (океан або поза покриттям)");
+  if (!first) throw new Error(bi("У цій точці немає тайла DEM (океан або поза покриттям)", "No DEM tile at this point (ocean or outside coverage)"));
   const { dLat, dLon } = first.geo;
   // global index of the native grid: lon = −180 + gx·dLon, lat = 90 − gy·dLat
   const gx0 = Math.round((lonC + 180) / dLon) - Math.floor(width / 2);
@@ -92,7 +93,7 @@ async function nativeMosaic({ urlFor, latC, lonC, width, height, fetcher, signal
       missing.push(`${latF},${lonF}`);
       continue;
     }
-    if (Math.abs(c.geo.dLon - dLon) > 1e-12 || Math.abs(c.geo.dLat - dLat) > 1e-12) throw new Error("Вікно перетинає зону з іншим кроком довготи — зменш область");
+    if (Math.abs(c.geo.dLon - dLon) > 1e-12 || Math.abs(c.geo.dLat - dLat) > 1e-12) throw new Error(bi("Вікно перетинає зону з іншим кроком довготи — зменш область", "The window crosses a zone with a different longitude step — reduce the area"));
     // tile-local index of the window origin
     const tx0 = gx0 - Math.round((c.geo.lonC0 + 180) / dLon);
     const ty0 = gy0 - Math.round((90 - c.geo.latC0) / dLat);
@@ -161,11 +162,11 @@ async function waterFractions({ lat0, lon0, dLat, dLon, width, height, fetcher, 
  * @param {{lat:number, lon:number, size:number, factor?:number, source?:"copernicus"|"nasadem", fetcher?, signal?}} o
  */
 export async function buildEarthWindow({ lat, lon, size, factor = 1, source = "copernicus", fetcher = fetch, signal }) {
-  if (!(Math.abs(lat) <= 85) || !(Math.abs(lon) <= 180)) throw new Error("Широта має бути в межах ±85°, довгота ±180°");
-  if (!(size >= 16 && size <= 256) || !(factor >= 1 && factor <= 20)) throw new Error("Розмір вікна 16…256 пікс., множник 1…20");
+  if (!(Math.abs(lat) <= 85) || !(Math.abs(lon) <= 180)) throw new Error(bi("Широта має бути в межах ±85°, довгота ±180°", "Latitude must be within ±85°, longitude ±180°"));
+  if (!(size >= 16 && size <= 256) || !(factor >= 1 && factor <= 20)) throw new Error(bi("Розмір вікна 16…256 пікс., множник 1…20", "Window size 16…256 px, factor 1…20"));
   const src = EARTH_SOURCES[source];
-  if (!src) throw new Error("Невідоме джерело DEM");
-  if (source === "nasadem" && Math.abs(lat) > 60) throw new Error("NASADEM покриває лише 56°S…60°N");
+  if (!src) throw new Error(bi("Невідоме джерело DEM", "Unknown DEM source"));
+  if (source === "nasadem" && Math.abs(lat) > 60) throw new Error(bi("NASADEM покриває лише 56°S…60°N", "NASADEM covers only 56°S…60°N"));
   let token = "";
   if (source === "nasadem") token = "?" + (await planetaryToken(fetcher));
   const urlFor = (la, lo) => (source === "nasadem" ? nasademUrl(la, lo) + token : copernicusUrl(la, lo));
@@ -196,7 +197,7 @@ export async function buildEarthWindow({ lat, lon, size, factor = 1, source = "c
   const meta = {
     body: "earth",
     status: "measured",
-    statusNote: (factor > 1 ? `Блочне усереднення ${factor}×${factor} рідних пікселів. ` : "") + "Цифрова модель висот з радарної інтерферометрії; " + src.surface + ".",
+    statusNote: (factor > 1 ? `Block average of ${factor}×${factor} native pixels. ` : "") + "Elevation model from radar interferometry; " + src.surface + ".",
     units: "m",
     nodata: "NaN",
     width: size,
@@ -206,27 +207,27 @@ export async function buildEarthWindow({ lat, lon, size, factor = 1, source = "c
       url: urlFor(Math.floor(lat), Math.floor(lon)).split("?")[0],
       productId: urlFor(Math.floor(lat), Math.floor(lon)).split("?")[0].split("/").pop().replace(/\.tif$/, ""),
       version: src.version,
-      observation: source === "nasadem" ? "SRTM, лютий 2000 (переоброблено 2020)" : "TanDEM-X, 2011–2015",
+      observation: source === "nasadem" ? "SRTM, February 2000 (reprocessed 2020)" : "TanDEM-X, 2011–2015",
       license: src.license,
-      archive: source === "nasadem" ? "Microsoft Planetary Computer (дзеркало LP DAAC)" : "AWS Open Data Registry",
+      archive: source === "nasadem" ? "Microsoft Planetary Computer (LP DAAC mirror)" : "AWS Open Data Registry",
       doc: src.doc,
       missingTiles: nat.missingTiles,
     },
     datum: src.datum,
-    crs: { body: "Earth", projection: "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint", latitude: "geodetic (WGS84)", longitude: "east-positive" },
+    crs: { body: "Earth", projection: "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint", latitude: "geodetic (WGS84)", longitude: "east-positive" },
     georef,
     resolution_m,
     verticalAccuracy: src.verticalAccuracy,
     mask: {
       status: "derived",
-      rule: "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+      rule: "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
       source: WORLDCOVER.title,
       license: WORLDCOVER.license,
       urls: wf.urls,
       overviewLevel: wf.level,
       maskedFraction: masked / data.length,
       unknownFraction: unknown / data.length,
-      note: "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома.",
+      note: "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown.",
     },
   };
   return { data, meta };

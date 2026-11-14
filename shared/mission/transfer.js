@@ -42,22 +42,20 @@ export function planTransfer(opts) {
     dvAvailable,
   };
   if (target === "earth")
-    return { ...common, applicable: false, note: "Ціль — Земля: міжтілесний переліт не застосовується. Аналізується лише локальний тестовий спуск." };
+    return { ...common, applicable: false };
   const rPark = BODIES.earth.radius + stack.parkingAltitude;
   const depStep = (opts.depStepDays ?? (target === "moon" ? 0.25 : 2)) * DAY * 1000;
   const tofStep = (opts.tofStepDays ?? (target === "moon" ? 0.125 : 5)) * DAY;
   const nDep = Math.max(1, Math.min(240, Math.floor((opts.windowDays * DAY * 1000) / depStep) + 1));
   const tofs = [];
   for (let t = opts.tofMinDays * DAY; t <= opts.tofMaxDays * DAY + 1; t += tofStep) tofs.push(t);
-  if (tofs.length > 240) throw new Error("Забагато кроків тривалості перельоту (макс. 240)");
+  if (tofs.length > 240) throw new Error("too-many-tof-steps");
   const grid = [];
   let best = null;
-  const unmodelled =
-    target === "moon"
-      ? ["Гравітація Місяця на перельоті (patched conic)", "Вплив Сонця, тиск світла", "Корекції траєкторії (TCM)", "Вибір площини парк. орбіти та часу старту в межах доби", "Низькоенергетичні/багатотільні траєкторії — не підтримуються"]
-      : ["Корекції траєкторії (TCM) і навігаційні похибки", "EDL — лише спрощена планарна модель (без радіаційного нагріву, вітру, 3-D і похибок навігації)", "Тиск сонячного світла, збурення інших планет", "Час старту в межах доби і площина парк. орбіти"];
+  // language-neutral keys; texts come from assessment.transferUnmodelled()
+  const unmodelledKeys = target === "moon" ? ["moonGravity", "sun", "tcm", "plane", "lowEnergy"] : ["tcm", "edlSimplified", "srp", "plane"];
   for (let i = 0; i < nDep; i++) {
-    if (opts.signal?.aborted) throw new Error("Скасовано");
+    if (opts.signal?.aborted) throw new Error("cancelled");
     const dep = opts.launchUtc + i * depStep;
     const row = [];
     for (const tof of tofs) {
@@ -74,14 +72,14 @@ export function planTransfer(opts) {
     grid.push(row);
     opts.onProgress?.((i + 1) / nDep);
   }
-  if (!best) return { ...common, applicable: true, grid, tofs, nDep, depStep, best: null, error: "Немає розв'язку Lambert у заданому вікні", unmodelled };
+  if (!best) return { ...common, applicable: true, grid, tofs, nDep, depStep, best: null, error: "no-lambert", unmodelledKeys };
   best.arc = sampleArc(best, target);
   const lastDep = opts.launchUtc + (nDep - 1) * depStep;
   best.onBoundary = {
     tof: best.tof <= tofs[0] + 1 || best.tof >= tofs[tofs.length - 1] - 1,
     departure: nDep > 1 && (best.depUtc === opts.launchUtc || best.depUtc === lastDep),
   };
-  return { ...common, applicable: true, grid, tofs, nDep, depStepMs: depStep, best, unmodelled, frame: target === "moon" ? "geocentric ecliptic J2000" : "heliocentric ecliptic J2000" };
+  return { ...common, applicable: true, grid, tofs, nDep, depStepMs: depStep, best, unmodelledKeys, frame: target === "moon" ? "geocentric ecliptic J2000" : "heliocentric ecliptic J2000" };
 }
 
 function marsCell(dep, arr, tof, rPark, stack, opts) {
@@ -107,9 +105,6 @@ function marsCell(dep, arr, tof, rPark, stack, opts) {
     vinfDep, vinfArr, c3: vinfDep ** 2, dla_deg: dla,
     dvDep, dvCap, entrySpeed: capture ? undefined : entrySpeed,
     dvStage,
-    dvBreakdown: capture
-      ? `TMI ${Math.round(dvDep)} + MOI ${Math.round(dvCap)} м/с (ідеальні імпульси)`
-      : `TMI ${Math.round(dvDep)} м/с; прибуття — прямий вхід в атмосферу (EDL моделюється окремо)`,
   };
 }
 
@@ -139,7 +134,6 @@ function moonCell(dep, arr, tof, rPark, stack, opts) {
     r1, v1: sol.v1, r2: Mo.r, v2: sol.v2,
     vinfArr, dvTLI, dvLOI, dvBrake, dvStage,
     c3: norm(sol.v1) ** 2 - (2 * muE) / rPark,
-    dvBreakdown: `TLI ${Math.round(dvTLI)} + LOI ${Math.round(dvLOI)} + гальмування до старту спуску ≈${Math.round(dvBrake)} м/с (оцінка)`,
   };
 }
 

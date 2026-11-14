@@ -103,8 +103,8 @@ function polygonFromWkt(wkt) {
 export function parseOdeProducts(json, body) {
   const spec = IMAGING_PRODUCTS[body];
   const r = json?.ODEResults;
-  if (!r) throw new Error("Неочікувана відповідь ODE");
-  if (r.Status === "ERROR") throw new Error("ODE: " + (r.Error || "помилка"));
+  if (!r) throw new Error("ODE: unexpected response");
+  if (r.Status === "ERROR") throw new Error("ODE: " + (r.Error || "error"));
   const list = r.Products?.Product ? [].concat(r.Products.Product) : [];
   return list.map((p) => {
     const lroc = body === "moon" ? lrocIndexGeometry(p, spec.radius_km) : null;
@@ -120,17 +120,12 @@ export function parseOdeProducts(json, body) {
       centerLat: num(p.Center_latitude),
       centerLon: num(p.Center_longitude) !== null ? ((num(p.Center_longitude) + 540) % 360) - 180 : null,
       spacecraftAltitude_km: lroc?.spacecraftAltitude_km ?? null,
-      spacecraftAltitudeNote: lroc
-        ? lroc.source
-        : body === "mars"
-          ? "Не публікується в метаданих ODE/етикетці HiRISE RDR; для обчислення потрібні SPICE-кернели MRO (не підключено)."
-          : "Немає в індексному записі продукту.",
+      spacecraftAltitudeSource: lroc ? "lroc-index" : body === "mars" ? "not-published-needs-spice" : "not-in-index",
       subSpacecraft: lroc ? { lat: lroc.subSpacecraftLat, lon: lroc.subSpacecraftLon } : null,
       northAzimuth_deg: lroc?.northAzimuth_deg ?? null,
       footprint: polygonFromWkt(p.Footprint_C0_geometry || p.Footprint_geometry),
       labelUrl: p.LabelURL || null,
       productUrl: p.ProductURL || p.External_url || null,
-      frame: "Кути відносно нормалі до опорної поверхні тіла (сфера/еліпсоїд) у центрі знімка, за метаданими PDS — не відносно схилу DEM.",
     };
   });
 }

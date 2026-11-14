@@ -5,7 +5,9 @@ import { loadDemIndex, loadDemData, loadCapabilities, loadLiveEarthDem, horizons
 import { createMissionClient } from "../../lib/missionWorker.js";
 import { makeGrid, offsetToPixel } from "../../../shared/terrain/analysis.js";
 import { latLonToPixel, pixelToLatLon, haversine } from "../../../shared/terrain/georef.js";
-import { ANALOG_LIMITS } from "../../../shared/terrain/analogs.js";
+import { ANALOG_LIMITS_I18N } from "../../../shared/terrain/analogs.js";
+import { terrainCard, landingCard, transferCard, dvBreakdown } from "../../../shared/mission/assessment.js";
+import { bi, pick } from "../../i18n/bilingual.js";
 import { localFrame } from "../../../shared/mission/descent.js";
 import { VEHICLE_PRESETS, STACK_DEFAULTS, DEFAULT_PRESET_BY_BODY, DEFAULT_START_BY_BODY, presetById, values, validateLander, LAUNCHER_PRESETS, launcherValues, edlValues } from "../../../shared/mission/vehicles.js";
 import { zonedToUtc, formatUtc, formatZone, formatDuration } from "../../../shared/mission/time.js";
@@ -21,13 +23,13 @@ import ImagingPanel from "./ImagingPanel.jsx";
 import { ProfileChart, SeriesChart, Porkchop, SlopeHistogram } from "./charts.jsx";
 import { createMissionScene } from "../../scene/landing.js";
 
-const BODY_NAME = { moon: "Місяць", mars: "Марс", earth: "Земля" };
+const BODY_NAME = { uk: { moon: "Місяць", mars: "Марс", earth: "Земля" }, en: { moon: "Moon", mars: "Mars", earth: "Earth" } };
 const LAUNCH_SITES = [
-  { id: "ksc", name: "Космічний центр Кеннеді (США)", lat: 28.573, lon: -80.649 },
-  { id: "kourou", name: "Куру (Французька Гвіана)", lat: 5.236, lon: -52.775 },
-  { id: "tanegashima", name: "Танеґасіма (Японія)", lat: 30.4, lon: 130.97 },
-  { id: "sriharikota", name: "Шріхаріхота (Індія)", lat: 13.72, lon: 80.23 },
-  { id: "custom", name: "Інша точка (вкажи широту)", lat: 45, lon: 30 },
+  { id: "ksc", name: "Космічний центр Кеннеді (США)", nameEn: "Kennedy Space Center (USA)", lat: 28.573, lon: -80.649 },
+  { id: "kourou", name: "Куру (Французька Гвіана)", nameEn: "Kourou (French Guiana)", lat: 5.236, lon: -52.775 },
+  { id: "tanegashima", name: "Танеґасіма (Японія)", nameEn: "Tanegashima (Japan)", lat: 30.4, lon: 130.97 },
+  { id: "sriharikota", name: "Шріхаріхота (Індія)", nameEn: "Sriharikota (India)", lat: 13.72, lon: 80.23 },
+  { id: "custom", name: "Інша точка (вкажи широту)", nameEn: "Other site (enter latitude)", lat: 45, lon: 30 },
 ];
 const TRANSFER_DEFAULTS = {
   moon: { windowDays: 30, tofMinDays: 3, tofMaxDays: 6, depStepDays: 0.25, tofStepDays: 0.125, arrivalMode: "capture" },
@@ -39,20 +41,20 @@ const ELLIPSE_DEFAULTS = {
   earth: { a_m: 100, b_m: 60 },
 };
 const LANDER_FIELDS = [
-  ["dryMass", "Суха маса", "кг"],
-  ["propellant", "Паливо", "кг"],
-  ["thrustMax", "Тяга макс.", "Н"],
-  ["throttleMin", "Мін. дросель", "частка"],
-  ["isp", "Isp", "с"],
-  ["footprintDiameter", "Діаметр опор", "м"],
-  ["maxSlope", "Допустимий ухил", "°"],
-  ["maxLegHeightDiff", "Перепад під опорами", "м"],
-  ["maxVerticalTouchdown", "Верт. швидкість торкання", "м/с"],
-  ["maxHorizontalTouchdown", "Гориз. швидкість торкання", "м/с"],
-  ["maxTilt", "Допустимий нахил", "°"],
-  ["reserveFraction", "Резерв палива", "частка"],
-  ["maxThrustTilt", "Макс. відхилення тяги", "°"],
-  ["dragArea", "Cd·A (атмосфера)", "м²"],
+  ["dryMass", "Суха маса", "кг", "Dry mass", "kg"],
+  ["propellant", "Паливо", "кг", "Propellant", "kg"],
+  ["thrustMax", "Тяга макс.", "Н", "Max thrust", "N"],
+  ["throttleMin", "Мін. дросель", "частка", "Min throttle", "fraction"],
+  ["isp", "Isp", "с", "Isp", "s"],
+  ["footprintDiameter", "Діаметр опор", "м", "Footprint diameter", "m"],
+  ["maxSlope", "Допустимий ухил", "°", "Max slope", "°"],
+  ["maxLegHeightDiff", "Перепад під опорами", "м", "Leg height difference", "m"],
+  ["maxVerticalTouchdown", "Верт. швидкість торкання", "м/с", "Vertical touchdown speed", "m/s"],
+  ["maxHorizontalTouchdown", "Гориз. швидкість торкання", "м/с", "Horizontal touchdown speed", "m/s"],
+  ["maxTilt", "Допустимий нахил", "°", "Max tilt", "°"],
+  ["reserveFraction", "Резерв палива", "частка", "Propellant reserve", "fraction"],
+  ["maxThrustTilt", "Макс. відхилення тяги", "°", "Max thrust tilt", "°"],
+  ["dragArea", "Cd·A (атмосфера)", "м²", "Cd·A (atmosphere)", "m²"],
 ];
 const PHASE_WEIGHT = { ascent: 0.05, parking: 0.05, cruise: 0.35, arrival: 0.1, descent: 0.45 };
 const PHASE_RATE = { ascent: 60, parking: 900, cruise: 2 * 86400, arrival: 1800, descent: 1 };
@@ -88,7 +90,8 @@ const key = (o) => JSON.stringify(o);
 const r1 = (v, d = 1) => (Number.isFinite(v) ? v.toFixed(d) : "—");
 
 export default function MissionPlanner({ body: initialBody, site: catalogSite, earthSites = [], onClose }) {
-  const { tr } = useLang();
+  const { tr, lang } = useLang();
+  const X = useCallback((uk, en) => (lang === "en" ? en : uk), [lang]);
   const dialog = useRef(null);
   const client = useRef(null);
   const sceneCanvas = useRef(null);
@@ -106,7 +109,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   const [mapMode, setMapMode] = useState("site");
   const [site, setSite] = useState(null);
   const [approach, setApproach] = useState(90);
-  const [ellipse, setEllipse] = useState({ ...ELLIPSE_DEFAULTS[initialBody] || ELLIPSE_DEFAULTS.moon, origin: "Припущення користувача (3σ розсіювання навігації); не з аналізу навігації конкретної місії" });
+  const [ellipse, setEllipse] = useState({ ...ELLIPSE_DEFAULTS[initialBody] || ELLIPSE_DEFAULTS.moon, origin: "user-assumption" });
   const [profileLength, setProfileLength] = useState(3000);
   const [polyline, setPolyline] = useState([]);
   const [vehicleId, setVehicleId] = useState(DEFAULT_PRESET_BY_BODY[initialBody] || "edu-robotic");
@@ -160,7 +163,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
         setCaps(c);
         const d = pickDataset(list, initialBody, catalogSite);
         if (d) setDatasetId(d.id);
-        else setError("Для цього тіла немає підготовленого DEM.");
+        else setError(bi("Для цього тіла немає підготовленого DEM.", "No prepared DEM for this body."));
       })
       .catch((e) => alive && setError(e.message));
     return () => {
@@ -256,16 +259,18 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     const out = { keys: {} };
     setRes((r) => ({ ...r, error: null }));
     try {
-      setBusy({ label: "Аналіз рельєфу…", progress: 0.05 });
+      setBusy({ label: X("Аналіз рельєфу…", "Analysing terrain…"), progress: 0.05 });
       await c.ensureLoaded(dem.meta, dem.buffer);
       out.analysis = await c.call("analyze", { datasetId: meta.id, site, ellipse: { ...ellipse, azimuth_deg: approach }, lander: L, approachAzimuth: approach, profileLength, polyline: polyline.length >= 2 ? polyline : null });
       out.keys.terrain = terrainKey;
-      setBusy({ label: "Симуляція спуску…", progress: 0.3 });
+      // inputs frozen at compute time: verdict cards are re-derived from them in the current language
+      out.inputs = { datasetId: meta.id, site, ellipse: { ...ellipse, azimuth_deg: approach }, lander: L, stack: S, edlVehicle: EV, body: meta.body };
+      setBusy({ label: X("Симуляція спуску…", "Simulating descent…"), progress: 0.3 });
       out.descent = await c.call("descent", { datasetId: meta.id, site, bodyId: meta.body, lander: L, start: { ...start, approachAzimuth: approach }, dt: start.dt });
       out.keys.descent = descentKey;
       if (meta.body !== "earth") {
-        setBusy({ label: "Пошук вікна старту (Lambert)…", progress: 0.5 });
-        if (!Number.isFinite(launchUtc)) throw new Error("Некоректна дата старту");
+        setBusy({ label: X("Пошук вікна старту (Lambert)…", "Searching launch window (Lambert)…"), progress: 0.5 });
+        if (!Number.isFinite(launchUtc)) throw new Error(bi("Некоректна дата старту", "Invalid launch date"));
         out.transfer = await c.call(
           "transfer",
           {
@@ -282,10 +287,10 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
             siteLat: pixelToLatLon(meta.georef, site.col, site.row).lat,
             siteElevation: grid.data[site.row * grid.width + site.col],
           },
-          { onProgress: (p) => setBusy({ label: "Пошук вікна старту (Lambert)…", progress: 0.5 + 0.35 * p }), timeout: 90000 },
+          { onProgress: (p) => setBusy({ label: X("Пошук вікна старту, виведення й EDL…", "Searching launch window, ascent & EDL…"), progress: 0.5 + 0.35 * p }), timeout: 90000 },
         );
       } else {
-        out.transfer = { transfer: { applicable: false, note: "Ціль — Земля: міжтілесний переліт не застосовується." }, card: { id: "transfer", title: "Переліт", status: "na", criteria: [], note: "Ціль — Земля: міжтілесний переліт не застосовується; аналізується лише локальний тестовий спуск." } };
+        out.transfer = { transfer: { applicable: false } };
       }
       out.keys.transfer = transferKey;
       out.computedUtc = Date.now();
@@ -293,17 +298,17 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       setPlay((p) => ({ ...p, phase: 0, local: 0, playing: false }));
       setHzCheck(null);
     } catch (e) {
-      setRes((r) => ({ ...r, error: e.name === "AbortError" ? "Розрахунок скасовано." : e.message }));
+      setRes((r) => ({ ...r, error: e.name === "AbortError" ? bi("Розрахунок скасовано.", "Computation cancelled.") : e.message }));
     } finally {
       setBusy(null);
     }
-  }, [meta, dem, grid, site, ellipse, approach, L, profileLength, polyline, start, launchUtc, transferOpts, launch.lat, S, LV, EV, terrainKey, descentKey, transferKey, landerErrors.length]);
+  }, [meta, dem, grid, site, ellipse, approach, L, profileLength, polyline, start, launchUtc, transferOpts, launch.lat, S, LV, EV, terrainKey, descentKey, transferKey, landerErrors.length, X]);
 
   const runAnalogs = useCallback(async () => {
     if (!meta || !index) return;
     const c = client.current;
     try {
-      setBusy({ label: "Порівняння з аналогами…", progress: 0.1 });
+      setBusy({ label: X("Порівняння з аналогами…", "Comparing with analogs…"), progress: 0.1 });
       const others = meta.body === "earth" ? index.filter((d) => d.body !== "earth") : index.filter((d) => d.body === "earth");
       // pick, per place, the variant whose pixel size is closest to the target's
       const groups = new Map();
@@ -318,7 +323,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       for (const d of cands) {
         const data = await loadDemData(d);
         await c.ensureLoaded(data.meta, data.buffer);
-        setBusy({ label: "Порівняння з аналогами…", progress: 0.1 + (0.8 * ++k) / cands.length });
+        setBusy({ label: X("Порівняння з аналогами…", "Comparing with analogs…"), progress: 0.1 + (0.8 * ++k) / cands.length });
       }
       await c.ensureLoaded(dem.meta, dem.buffer);
       const list = await c.call("analogs", { targetId: meta.id, candidateIds: cands.map((d) => d.id) });
@@ -328,19 +333,19 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     } finally {
       setBusy(null);
     }
-  }, [meta, index, dem, analogKey]);
+  }, [meta, index, dem, analogKey, X]);
 
   function cancel() {
     client.current?.cancel();
     setBusy(null);
-    setRes((r) => ({ ...r, error: "Розрахунок скасовано." }));
+    setRes((r) => ({ ...r, error: bi("Розрахунок скасовано.", "Computation cancelled.") }));
   }
 
   async function loadLive(scale) {
     const lat = Number(liveLat),
       lon = Number(liveLon);
     try {
-      setBusy({ label: "Отримання DEM (" + (liveSource === "nasadem" ? "NASADEM" : "Copernicus GLO-30") + " + маска ESA WorldCover)…", progress: 0.3 });
+      setBusy({ label: X("Отримання DEM (", "Fetching DEM (") + (liveSource === "nasadem" ? "NASADEM" : "Copernicus GLO-30") + X(" + маска ESA WorldCover)…", " + ESA WorldCover mask)…"), progress: 0.3 });
       const d = await loadLiveEarthDem(lat, lon, scale, liveSource);
       setIndex((list) => [...list.filter((x) => x.id !== d.meta.id), { ...d.meta, file: null }]);
       const ly = await client.current.ensureLoaded(d.meta, d.buffer);
@@ -362,16 +367,16 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     if (presetById(id).edl) setEdlParams(structuredClone(presetById(id).edl));
   }
   function editEdl(k, v) {
-    setEdlParams((e) => ({ ...e, [k]: { ...e[k], value: Number(v), source: "користувач (змінено)" } }));
+    setEdlParams((e) => ({ ...e, [k]: { ...e[k], value: Number(v), source: "user" } }));
   }
   function editStage(i, k, v) {
-    setLauncher((l) => ({ ...l, stages: l.stages.map((st, j) => (j === i ? { ...st, [k]: { ...st[k], value: Number(v), source: "користувач (змінено)" } } : st)) }));
+    setLauncher((l) => ({ ...l, stages: l.stages.map((st, j) => (j === i ? { ...st, [k]: { ...st[k], value: Number(v), source: "user" } } : st)) }));
   }
   function editLander(k, v) {
-    setLander((l) => ({ ...l, [k]: { ...(l[k] || { unit: "" }), value: Number(v), source: "користувач (змінено)" } }));
+    setLander((l) => ({ ...l, [k]: { ...(l[k] || { unit: "" }), value: Number(v), source: "user" } }));
   }
   function editStack(k, v) {
-    setStack((s) => ({ ...s, [k]: { ...s[k], value: Number(v), source: "користувач (змінено)" } }));
+    setStack((s) => ({ ...s, [k]: { ...s[k], value: Number(v), source: "user" } }));
   }
 
   // ---- 3D scene -------------------------------------------------------------------
@@ -449,7 +454,25 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   // ---- timeline / playback --------------------------------------------------------
   const ascentRes = res.transfer?.ascent;
   const edlRes = res.transfer?.edl;
-  const phases = useMemo(() => buildPhases(transfer, descent, body, { ascent: ascentRes, edl: edlRes }), [transfer, descent, body, ascentRes, edlRes]);
+  // Verdict cards are pure functions of frozen inputs + raw solver results → instant language switch.
+  const cardTerrain = useMemo(
+    () => (res.analysis && res.inputs && grid && grid.meta?.id === res.inputs.datasetId ? terrainCard(grid, res.inputs.site, res.inputs.lander, res.inputs.ellipse, lang) : null),
+    [res.analysis, res.inputs, grid, lang],
+  );
+  const cardLanding = useMemo(() => (res.descent && res.inputs ? landingCard(res.descent.descent, res.inputs.lander, lang) : null), [res.descent, res.inputs, lang]);
+  const cardTransfer = useMemo(
+    () => (res.transfer && res.inputs ? transferCard(res.transfer.transfer, res.inputs.stack, { ascent: res.transfer.ascent, edl: res.transfer.edl, edlVehicle: res.inputs.edlVehicle }, lang) : null),
+    [res.transfer, res.inputs, lang],
+  );
+  const flagText = (f) =>
+    f.code === "scale-mismatch"
+      ? X(`Масштаби після узгодження різняться на ${f.value} %`, `Scales differ by ${f.value} % after matching`)
+      : f.code === "too-few-pixels"
+        ? X("Замало валідних пікселів на спільному масштабі — порівняння не виконується", "Too few valid pixels at the common scale — no comparison")
+        : f.code === "low-coverage"
+          ? X("Покриття метрик < 60 % — рейтинг ненадійний", "Metric coverage < 60 % — rating unreliable")
+          : String(f.code || f);
+  const phases = useMemo(() => buildPhases(transfer, descent, body, { ascent: ascentRes, edl: edlRes }, lang), [transfer, descent, body, ascentRes, edlRes, lang]);
   const phase = phases[Math.min(play.phase, phases.length - 1)];
   const phaseLen = phase ? (phase.end - phase.start) / 1000 : 0;
   const current = useMemo(() => {
@@ -525,9 +548,9 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   function summary() {
     return {
       computedUtc: res.computedUtc ?? null,
-      terrain: res.analysis ? { status: res.analysis.card.status, criteria: res.analysis.card.criteria.map(({ id, value, status }) => ({ id, value, status })) } : null,
-      landing: res.descent ? { status: res.descent.card.status, outcome: descent.outcome, touchdown: descent.touchdown ? { t: descent.touchdown.t, vVertical: descent.touchdown.vVertical, vHorizontal: descent.touchdown.vHorizontal, miss_m: descent.touchdown.miss_m } : null, propellantRemaining: descent.propellantRemaining } : null,
-      transfer: transfer?.best ? { status: res.transfer.card.status, depUtc: new Date(transfer.best.depUtc).toISOString(), arrUtc: new Date(transfer.best.arrUtc).toISOString(), dvStage: transfer.best.dvStage } : res.transfer ? { status: res.transfer.card.status } : null,
+      terrain: cardTerrain ? { status: cardTerrain.status, criteria: cardTerrain.criteria.map(({ id, value, status }) => ({ id, value, status })) } : null,
+      landing: res.descent && descent ? { status: cardLanding?.status, outcome: descent.outcome, touchdown: descent.touchdown ? { t: descent.touchdown.t, vVertical: descent.touchdown.vVertical, vHorizontal: descent.touchdown.vHorizontal, miss_m: descent.touchdown.miss_m } : null, propellantRemaining: descent.propellantRemaining } : null,
+      transfer: transfer?.best ? { status: cardTransfer?.status, depUtc: new Date(transfer.best.depUtc).toISOString(), arrUtc: new Date(transfer.best.arrUtc).toISOString(), dvStage: transfer.best.dvStage } : res.transfer ? { status: cardTransfer?.status } : null,
       analogs: res.analogs?.map((a) => ({ id: a.id, score: a.score, coverage: a.coverage })) ?? null,
     };
   }
@@ -536,7 +559,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       inputs,
       dataset: meta,
       results: summary(),
-      limitations: ["Навчальна модель; не для планування реальних польотів.", "Див. docs/MODELS_AND_LIMITATIONS.md"],
+      limitations: [X("Навчальна модель; не для планування реальних польотів.", "Educational model; not for planning real flights."), X("Див. docs/MODELS_AND_LIMITATIONS.md", "See docs/MODELS_AND_LIMITATIONS.md")],
     });
     download(`earth2orbit-scenario-${datasetId}.json`, JSON.stringify(sc, null, 2), "application/json");
   }
@@ -549,9 +572,9 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     try {
       const sc = parseScenario(await file.text());
       const i = sc.inputs;
-      if (!index.some((d) => d.id === i.datasetId)) throw new Error("Набір даних " + i.datasetId + " недоступний у цій версії");
+      if (!index.some((d) => d.id === i.datasetId)) throw new Error(bi("Набір даних " + i.datasetId + " недоступний у цій версії", "Dataset " + i.datasetId + " is not available in this version"));
       const ds = index.find((d) => d.id === i.datasetId);
-      if (sc.data?.sha256 && ds.sha256 !== sc.data.sha256) throw new Error("Контрольна сума DEM відрізняється — це інші дані");
+      if (sc.data?.sha256 && ds.sha256 !== sc.data.sha256) throw new Error(bi("Контрольна сума DEM відрізняється — це інші дані", "DEM checksum differs — these are different data"));
       pendingImport.current = sc;
       setDatasetId(i.datasetId);
       setVehicleId(i.vehicleId);
@@ -563,13 +586,13 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       setApproach(i.approachAzimuth);
       setEllipse(i.ellipse);
       setProfileLength(i.profileLength);
-      setImportNote("Сценарій імпортовано. Натисни «Розрахувати», щоб відтворити й звірити результати.");
+      setImportNote(bi("Сценарій імпортовано. Натисни «Розрахувати», щоб відтворити й звірити результати.", "Scenario imported. Press “Compute” to reproduce and compare the results."));
       if (dem?.meta.id === i.datasetId) {
         setSite(i.site);
         setPolyline(i.polyline || []);
       }
     } catch (e) {
-      setError("Імпорт: " + e.message);
+      setError(bi("Імпорт: ", "Import: ") + pick(e.message, lang));
     }
   }
   useEffect(() => {
@@ -581,7 +604,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     if (sc.results.landing?.touchdown && now.landing?.touchdown) checks.push(same(now.landing.touchdown.t, sc.results.landing.touchdown.t));
     if (sc.results.transfer?.dvStage && now.transfer?.dvStage) checks.push(same(now.transfer.dvStage, sc.results.transfer.dvStage));
     if (sc.results.terrain && now.terrain) checks.push(now.terrain.status === sc.results.terrain.status);
-    setImportNote(checks.length ? (checks.every(Boolean) ? "✓ Імпортований сценарій відтворено: ключові результати збігаються." : "✕ Результати відрізняються від збережених у файлі.") : "");
+    setImportNote(checks.length ? (checks.every(Boolean) ? bi("✓ Імпортований сценарій відтворено: ключові результати збігаються.", "✓ Imported scenario reproduced: key results match.") : bi("✕ Результати відрізняються від збережених у файлі.", "✕ Results differ from those saved in the file.")) : "");
     pendingImport.current = null;
   }, [res.computedUtc]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -627,7 +650,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     <dialog ref={dialog} className="mission-planner" aria-label={tr("Планувальник місії")} onCancel={(e) => (e.preventDefault(), onClose())}>
       <header className="m-head">
         <div>
-          <div className="eyebrow">{tr("АНАЛІЗ РЕЛЬЄФУ · ПОСАДКА · ПЕРЕЛІТ")} · {BODY_NAME[body]}</div>
+          <div className="eyebrow">{tr("АНАЛІЗ РЕЛЬЄФУ · ПОСАДКА · ПЕРЕЛІТ")} · {BODY_NAME[lang === "en" ? "en" : "uk"][body]}</div>
           <h2>{tr("Планувальник місії")}</h2>
           <p className="m-disclaimer">{tr("Навчальна модель незалежного проєкту для NASA Space Apps 2026. Не сертифікована система керування польотами.")}</p>
         </div>
@@ -661,24 +684,24 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       )}
       {(error || res.error) && (
         <p className="m-error" role="alert">
-          {error || res.error}
+          {pick(error || res.error, lang)}
         </p>
       )}
-      {importNote && <p className="m-info" role="status">{importNote}</p>}
+      {importNote && <p className="m-info" role="status">{pick(importNote, lang)}</p>}
 
       </div>
 
       <div className="m-layout">
         {/* ------------------------------------------------ LEFT: parameters */}
-        <aside className="m-left" aria-label={tr("Параметри")}>
+        <aside className="m-left" aria-label={X("Параметри", "Parameters")}>
           <details open>
-            <summary>1. {tr("Ділянка й дані")}</summary>
+            <summary>1. {X("Ділянка й дані", "Site and data")}</summary>
             <label>
               DEM
               <select value={datasetId || ""} onChange={(e) => setDatasetId(e.target.value)}>
                 {bodyDatasets.map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.name} · {d.resolution_m} м/пікс.
+                    {d.name} · {d.resolution_m} {X("м/пікс.", "m/px")}
                   </option>
                 ))}
               </select>
@@ -689,45 +712,45 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   <b>{meta.source.title}</b> · {meta.source.productId} · {meta.source.version}
                 </p>
                 <p>
-                  Статус: <b>{meta.status}</b> ({meta.statusNote}) · {meta.width}×{meta.height} пікс. · {meta.resolution_m} м/пікс.
+                  {X("Статус", "Status")}: <b>{meta.status}</b> ({meta.statusNote}) · {meta.width}×{meta.height} {X("пікс.", "px")} · {meta.resolution_m} {X("м/пікс.", "m/px")}
                 </p>
-                <p>Датум: {meta.datum.description}</p>
+                <p>{X("Датум", "Datum")}: {meta.datum.description}</p>
                 <p>
-                  CRS: {meta.crs.projection}; широта {meta.crs.latitude}; довгота {meta.crs.longitude}
+                  CRS: {meta.crs.projection}; {X("широта", "latitude")} {meta.crs.latitude}; {X("довгота", "longitude")} {meta.crs.longitude}
                 </p>
-                <p>Верт. точність: {meta.verticalAccuracy}</p>
+                <p>{X("Верт. точність", "Vertical accuracy")}: {meta.verticalAccuracy}</p>
                 {meta.mask && (
                   <p>
-                    Маска води ({meta.mask.status}): {meta.mask.rule}; замасковано {(meta.mask.maskedFraction * 100).toFixed(1)} %
-                    {meta.mask.unknownFraction > 0 && `, маска невідома для ${(meta.mask.unknownFraction * 100).toFixed(1)} %`}
+                    {X("Маска води", "Water mask")} ({meta.mask.status}): {meta.mask.rule}; {X("замасковано", "masked")} {(meta.mask.maskedFraction * 100).toFixed(1)} %
+                    {meta.mask.unknownFraction > 0 && X(`, маска невідома для ${(meta.mask.unknownFraction * 100).toFixed(1)} %`, `, mask unknown for ${(meta.mask.unknownFraction * 100).toFixed(1)} %`)}
                     {meta.mask.license && ` · ${meta.mask.license}`}
                   </p>
                 )}
                 <p>
-                  Ліцензія: {meta.source.license}{" "}
+                  {X("Ліцензія", "Licence")}: {meta.source.license}{" "}
                   <a href={meta.source.label || meta.source.url} target="_blank" rel="noopener noreferrer">
-                    джерело ↗
+                    {X("джерело", "source")} ↗
                   </a>
                 </p>
-                {dem?.checksumOk && <p>SHA-256 перевірено ✓</p>}
+                {dem?.checksumOk && <p>{X("SHA-256 перевірено ✓", "SHA-256 verified ✓")}</p>}
 
               </div>
             )}
             {siteLL && (
               <p className="m-muted">
-                Точка: {siteLL.lat.toFixed(4)}°, {siteLL.lon.toFixed(4)}° (пікс. {site.col},{site.row})
-                {catalogDist !== null && ` · від опорної точки каталогу ${(catalogDist / 1000).toFixed(1)} км${catalogDist > 5000 ? " — вирізка лише поблизу, не саме місце каталогу" : ""}`}
+                {X("Точка", "Point")}: {siteLL.lat.toFixed(4)}°, {siteLL.lon.toFixed(4)}° ({X("пікс.", "px")} {site.col},{site.row})
+                {catalogDist !== null && X(` · від опорної точки каталогу ${(catalogDist / 1000).toFixed(1)} км${catalogDist > 5000 ? " — вирізка лише поблизу, не саме місце каталогу" : ""}`, ` · ${(catalogDist / 1000).toFixed(1)} km from the catalogue reference point${catalogDist > 5000 ? " — the cut-out is only nearby, not the catalogue site itself" : ""}`)}
               </p>
             )}
             {body === "earth" && (
               <fieldset className="m-live">
-                <legend>Інша точка на Землі (live DEM)</legend>
+                <legend>{X("Інша точка на Землі (live DEM)", "Another point on Earth (live DEM)")}</legend>
                 <div className="m-row">
-                  <input aria-label="Широта" value={liveLat} onChange={(e) => setLiveLat(e.target.value)} placeholder="lat" />
-                  <input aria-label="Довгота" value={liveLon} onChange={(e) => setLiveLon(e.target.value)} placeholder="lon" />
+                  <input aria-label={X("Широта", "Latitude")} value={liveLat} onChange={(e) => setLiveLat(e.target.value)} placeholder="lat" />
+                  <input aria-label={X("Довгота", "Longitude")} value={liveLon} onChange={(e) => setLiveLon(e.target.value)} placeholder="lon" />
                 </div>
                 <label>
-                  Джерело
+                  {X("Джерело", "Source")}
                   <select value={liveSource} onChange={(e) => setLiveSource(e.target.value)}>
                     <option value="copernicus">Copernicus DEM GLO-30 (DSM, EGM2008)</option>
                     <option value="nasadem">NASADEM (SRTM 2000, EGM96; 56°S–60°N)</option>
@@ -735,19 +758,19 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 </label>
                 <div className="m-row">
                   <button className="text-button" disabled={!caps?.demEarthOnDemand || !!busy} onClick={() => loadLive("fine")}>
-                    ~30 м
+                    ~30 {X("м", "m")}
                   </button>
                   <button className="text-button" disabled={!caps?.demEarthOnDemand || !!busy} onClick={() => loadLive("coarse")}>
-                    ~450 м
+                    ~450 {X("м", "m")}
                   </button>
                 </div>
-                <p className="m-muted">Маска води: ESA WorldCover 2021 (клас 80). Висоти нижче рівня моря не відкидаються.</p>
-                {!caps?.demEarthOnDemand && <p className="m-muted">{caps?.reason || "Потрібен Node-сервер."}</p>}
+                <p className="m-muted">{X("Маска води: ESA WorldCover 2021 (клас 80). Висоти нижче рівня моря не відкидаються.", "Water mask: ESA WorldCover 2021 (class 80). Elevations below sea level are kept.")}</p>
+                {!caps?.demEarthOnDemand && <p className="m-muted">{pick(caps?.reason, lang) || X("Потрібен Node-сервер.", "A Node server is required.")}</p>}
               </fieldset>
             )}
           </details>
           <details>
-            <summary>{tr("Геометрія знімання й розмежування величин")}</summary>
+            <summary>{X("Геометрія знімання й розмежування величин", "Imaging geometry and quantity separation")}</summary>
             <ImagingPanel
               key={datasetId}
               body={body}
@@ -759,78 +782,81 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 slope: site && layers ? layers.slope[site.row * grid.width + site.col] : null,
                 aspect: site && layers ? layers.aspect[site.row * grid.width + site.col] : null,
                 trajectory: descent
-                  ? `початковий кут траєкторії ${(Math.atan2(-descent.samples[0].vz, Math.hypot(descent.samples[0].vx, descent.samples[0].vy)) * 180 / Math.PI).toFixed(1)}° нижче горизонту; нахил тяги при торканні ${descent.touchdown?.thrustTilt_deg?.toFixed(1) ?? "—"}° (орієнтація = напрям тяги)`
+                  ? X(
+                      `початковий кут траєкторії ${(Math.atan2(-descent.samples[0].vz, Math.hypot(descent.samples[0].vx, descent.samples[0].vy)) * 180 / Math.PI).toFixed(1)}° нижче горизонту; нахил тяги при торканні ${descent.touchdown?.thrustTilt_deg?.toFixed(1) ?? "—"}° (орієнтація = напрям тяги)`,
+                      `initial flight-path angle ${(Math.atan2(-descent.samples[0].vz, Math.hypot(descent.samples[0].vx, descent.samples[0].vy)) * 180 / Math.PI).toFixed(1)}° below horizon; thrust tilt at touchdown ${descent.touchdown?.thrustTilt_deg?.toFixed(1) ?? "—"}° (attitude = thrust direction)`,
+                    )
                   : null,
               }}
               onFootprints={setFootprintsLL}
             />
           </details>
           <details open>
-            <summary>2. {tr("Майданчик і захід")}</summary>
-            <div className="m-seg" role="radiogroup" aria-label="Режим карти">
+            <summary>2. {X("Майданчик і захід", "Landing site and approach")}</summary>
+            <div className="m-seg" role="radiogroup" aria-label={X("Режим карти", "Map mode")}>
               <button role="radio" aria-checked={mapMode === "site"} className={mapMode === "site" ? "active" : ""} onClick={() => setMapMode("site")}>
-                ⌖ точка
+                ⌖ {X("точка", "point")}
               </button>
               <button role="radio" aria-checked={mapMode === "polyline"} className={mapMode === "polyline" ? "active" : ""} onClick={() => setMapMode("polyline")}>
-                ⟋ полілінія
+                ⟋ {X("полілінія", "polyline")}
               </button>
               <button onClick={() => setPolyline([])} disabled={!polyline.length}>
-                очистити
+                {X("очистити", "clear")}
               </button>
             </div>
             <label>
-              Напрям заходу (азимут руху), °
+              {X("Напрям заходу (азимут руху), °", "Approach direction (azimuth of travel), °")}
               <input type="number" min="0" max="359" value={approach} onChange={(e) => setApproach(((Number(e.target.value) % 360) + 360) % 360)} />
             </label>
             <div className="m-row">
               <label>
-                Еліпс: велика піввісь, м
+                {X("Еліпс: велика піввісь, м", "Ellipse: semi-major axis, m")}
                 <input type="number" min="1" value={ellipse.a_m} onChange={(e) => setEllipse((x) => ({ ...x, a_m: Math.max(1, +e.target.value) }))} />
               </label>
               <label>
-                мала, м
+                {X("мала, м", "semi-minor, m")}
                 <input type="number" min="1" value={ellipse.b_m} onChange={(e) => setEllipse((x) => ({ ...x, b_m: Math.max(1, +e.target.value) }))} />
               </label>
             </div>
-            <p className="m-muted">Походження еліпса: {ellipse.origin}. Велика вісь орієнтована вздовж заходу.</p>
+            <p className="m-muted">{X("Походження еліпса: припущення користувача (3σ розсіювання навігації), не аналіз навігації конкретної місії. Велика вісь орієнтована вздовж заходу.", "Ellipse origin: user assumption (3σ navigation dispersion), not a mission-specific navigation analysis. The major axis follows the approach direction.")}</p>
             <label>
-              Довжина профілів, м
+              {X("Довжина профілів, м", "Profile length, m")}
               <input type="number" min="50" value={profileLength} onChange={(e) => setProfileLength(Math.max(50, +e.target.value))} />
             </label>
           </details>
           <details>
-            <summary>3. {tr("Апарат")}</summary>
-            <select value={vehicleId} onChange={(e) => choosePreset(e.target.value)} aria-label="Preset апарата">
+            <summary>3. {X("Апарат", "Vehicle")}</summary>
+            <select value={vehicleId} onChange={(e) => choosePreset(e.target.value)} aria-label={X("Preset апарата", "Vehicle preset")}>
               {VEHICLE_PRESETS.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.name}
+                  {lang === "en" ? v.nameEn : v.name}
                 </option>
               ))}
             </select>
-            <p className="m-muted">{presetById(vehicleId).note}</p>
+            <p className="m-muted">{lang === "en" ? presetById(vehicleId).noteEn : presetById(vehicleId).note}</p>
             <div className="m-params">
-              {LANDER_FIELDS.filter(([k]) => lander[k] !== undefined || k === "dragArea").map(([k, label, unit]) => (
-                <label key={k} title={"Джерело: " + (lander[k]?.source || "немає")}>
-                  {label}, {unit}
+              {LANDER_FIELDS.filter(([k]) => lander[k] !== undefined || k === "dragArea").map(([k, label, unit, labelEn, unitEn]) => (
+                <label key={k} title={X("Джерело: ", "Source: ") + (lander[k]?.source || X("немає", "none"))}>
+                  {X(label, labelEn)}, {X(unit, unitEn)}
                   <input type="number" step="any" value={lander[k]?.value ?? 0} onChange={(e) => editLander(k, e.target.value)} />
-                  <small className={lander[k]?.source === "assumed" ? "m-src-assumed" : "m-src"}>{lander[k]?.source === "assumed" ? "припущення" : lander[k]?.source?.startsWith("користувач") ? "користувач" : lander[k] ? "джерело ⓘ" : "0 (немає)"}</small>
+                  <small className={lander[k]?.source === "assumed" ? "m-src-assumed" : "m-src"}>{lander[k]?.source === "assumed" ? X("припущення", "assumption") : lander[k]?.source === "user" ? X("користувач", "user") : lander[k] ? X("джерело ⓘ", "source ⓘ") : X("0 (немає)", "0 (none)")}</small>
                 </label>
               ))}
             </div>
             {landerErrors.length > 0 && <p className="m-error">{landerErrors.join("; ")}</p>}
             <p className="m-muted">
-              Ідеальна Δv спуску: {r1(L.isp * 9.80665 * Math.log((L.dryMass + L.propellant) / L.dryMass), 0)} м/с (Isp·g0·ln(m0/mf) — не повна вартість)
+              {X("Ідеальна Δv спуску", "Ideal descent Δv")}: {r1(L.isp * 9.80665 * Math.log((L.dryMass + L.propellant) / L.dryMass), 0)} {X("м/с", "m/s")} {X("(Isp·g0·ln(m0/mf) — не повна вартість)", "(Isp·g0·ln(m0/mf) — not the full cost)")}
             </p>
           </details>
           <details>
-            <summary>4. {tr("Початок спуску")}</summary>
+            <summary>4. {X("Початок спуску", "Descent start")}</summary>
             <div className="m-params">
               {[
-                ["altitude", "Висота над ціллю, м"],
-                ["downrange", "Відстань до цілі, м"],
-                ["horizontalSpeed", "Гориз. швидкість, м/с"],
-                ["verticalSpeed", "Верт. швидкість, м/с"],
-                ["dt", "Крок інтегрування, с"],
+                ["altitude", X("Висота над ціллю, м", "Altitude above target, m")],
+                ["downrange", X("Відстань до цілі, м", "Distance to target, m")],
+                ["horizontalSpeed", X("Гориз. швидкість, м/с", "Horizontal speed, m/s")],
+                ["verticalSpeed", X("Верт. швидкість, м/с", "Vertical speed, m/s")],
+                ["dt", X("Крок інтегрування, с", "Integration step, s")],
               ].map(([k, l]) => (
                 <label key={k}>
                   {l}
@@ -838,7 +864,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 </label>
               ))}
             </div>
-            <p className="m-muted">Крок фізики фіксований і не залежить від FPS чи швидкості перегляду.</p>
+            <p className="m-muted">{X("Крок фізики фіксований і не залежить від FPS чи швидкості перегляду.", "The physics step is fixed and independent of FPS and playback speed.")}</p>
             {edlRes?.outcome === "powered-descent-start" && (
               <button
                 className="text-button"
@@ -851,20 +877,20 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   }))
                 }
               >
-                ⇣ Взяти стан після EDL ({r1(edlRes.end.h, 0)} м, v↓ {r1(edlRes.end.vVertical, 1)} м/с)
+                ⇣ {X("Взяти стан після EDL", "Use post-EDL state")} ({r1(edlRes.end.h, 0)} {X("м", "m")}, v↓ {r1(edlRes.end.vVertical, 1)} {X("м/с", "m/s")})
               </button>
             )}
           </details>
           {body !== "earth" && (
             <details>
-              <summary>5. {tr("Старт із Землі й переліт")}</summary>
+              <summary>5. {X("Старт із Землі й переліт", "Launch from Earth and transfer")}</summary>
               <div className="m-row">
                 <label>
-                  Дата й час
+                  {X("Дата й час", "Date and time")}
                   <input type="datetime-local" value={launch.local} onChange={(e) => setLaunch((l) => ({ ...l, local: e.target.value }))} />
                 </label>
                 <label>
-                  Пояс
+                  {X("Пояс", "Time zone")}
                   <select value={launch.timeZone} onChange={(e) => setLaunch((l) => ({ ...l, timeZone: e.target.value }))}>
                     <option value="Europe/Kyiv">Europe/Kyiv</option>
                     <option value="UTC">UTC</option>
@@ -872,9 +898,9 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   </select>
                 </label>
               </div>
-              <p className="m-muted">{Number.isFinite(launchUtc) ? `= ${formatUtc(launchUtc)} · ${formatZone(launchUtc, "Europe/Kyiv")}` : "Некоректна дата"} — початок вікна пошуку.</p>
+              <p className="m-muted">{Number.isFinite(launchUtc) ? `= ${formatUtc(launchUtc)} · ${formatZone(launchUtc, "Europe/Kyiv", lang === "en" ? "en-GB" : "uk-UA")}` : X("Некоректна дата", "Invalid date")} — {X("початок вікна пошуку.", "start of the search window.")}</p>
               <label>
-                Космодром
+                {X("Космодром", "Launch site")}
                 <select
                   value={launch.siteId}
                   onChange={(e) => {
@@ -884,24 +910,24 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 >
                   {LAUNCH_SITES.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.name}
+                      {lang === "en" ? s.nameEn : s.name}
                     </option>
                   ))}
                 </select>
               </label>
               {launch.siteId === "custom" && (
                 <label>
-                  Широта старту, °
+                  {X("Широта старту, °", "Launch latitude, °")}
                   <input type="number" min="-90" max="90" value={launch.lat} onChange={(e) => setLaunch((l) => ({ ...l, lat: +e.target.value }))} />
                 </label>
               )}
               <div className="m-params">
                 {[
-                  ["windowDays", "Вікно пошуку, діб"],
-                  ["depStepDays", "Крок дати, діб"],
-                  ["tofMinDays", "Тривалість від, діб"],
-                  ["tofMaxDays", "до, діб"],
-                  ["tofStepDays", "Крок тривалості, діб"],
+                  ["windowDays", X("Вікно пошуку, діб", "Search window, days")],
+                  ["depStepDays", X("Крок дати, діб", "Date step, days")],
+                  ["tofMinDays", X("Тривалість від, діб", "Flight time from, days")],
+                  ["tofMaxDays", X("до, діб", "to, days")],
+                  ["tofStepDays", X("Крок тривалості, діб", "Flight-time step, days")],
                 ].map(([k, l]) => (
                   <label key={k}>
                     {l}
@@ -911,40 +937,40 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               </div>
               {body === "mars" && (
                 <label>
-                  Прибуття
+                  {X("Прибуття", "Arrival")}
                   <select value={transferOpts.arrivalMode} onChange={(e) => setTransferOpts((o) => ({ ...o, arrivalMode: e.target.value }))}>
-                    <option value="entry">Прямий вхід в атмосферу (EDL моделюється)</option>
-                    <option value="capture">Захоплення на орбіту (MOI)</option>
+                    <option value="entry">{X("Прямий вхід в атмосферу (EDL моделюється)", "Direct atmospheric entry (EDL modelled)")}</option>
+                    <option value="capture">{X("Захоплення на орбіту (MOI)", "Orbit capture (MOI)")}</option>
                   </select>
                 </label>
               )}
               <div className="m-params">
                 {[
-                  ["transferDryMass", "Суха маса перелітного ступеня, кг"],
-                  ["transferPropellant", "Паливо ступеня, кг"],
-                  ["transferIsp", "Isp ступеня, с"],
-                  ["parkingAltitude", "Висота паркувальної орбіти, м"],
-                  ["arrivalOrbitAltitude", "Висота орбіти прибуття, м"],
+                  ["transferDryMass", X("Суха маса перелітного ступеня, кг", "Transfer stage dry mass, kg")],
+                  ["transferPropellant", X("Паливо ступеня, кг", "Stage propellant, kg")],
+                  ["transferIsp", X("Isp ступеня, с", "Stage Isp, s")],
+                  ["parkingAltitude", X("Висота паркувальної орбіти, м", "Parking orbit altitude, m")],
+                  ["arrivalOrbitAltitude", X("Висота орбіти прибуття, м", "Arrival orbit altitude, m")],
                 ].map(([k, l]) => (
-                  <label key={k} title={"Джерело: " + stack[k].source}>
+                  <label key={k} title={X("Джерело: ", "Source: ") + stack[k].source}>
                     {l}
                     <input type="number" step="any" value={stack[k].value} onChange={(e) => editStack(k, e.target.value)} />
-                    <small className="m-src-assumed">{stack[k].source.startsWith("користувач") ? "користувач" : "припущення"}</small>
+                    <small className="m-src-assumed">{stack[k].source === "user" ? X("користувач", "user") : X("припущення", "assumption")}</small>
                   </label>
                 ))}
               </div>
               <fieldset className="m-live">
-                <legend>Носій (симуляція виведення)</legend>
-                <p className="m-muted">{launcher.note}</p>
+                <legend>{X("Носій (симуляція виведення)", "Launcher (ascent simulation)")}</legend>
+                <p className="m-muted">{lang === "en" ? launcher.noteEn : launcher.note}</p>
                 {launcher.stages.map((st, i) => (
                   <div key={i} className="m-params">
                     {[
-                      ["propellant", `Ступінь ${i + 1}: паливо, кг`],
-                      ["dryMass", "суха маса, кг"],
-                      ["thrustVac", "тяга (вакуум), Н"],
-                      ["ispVac", "Isp вакуум, с"],
-                      ...(i === 0 ? [["ispSl", "Isp біля землі, с"]] : []),
-                      ["cdA", "Cd·A, м²"],
+                      ["propellant", X(`Ступінь ${i + 1}: паливо, кг`, `Stage ${i + 1}: propellant, kg`)],
+                      ["dryMass", X("суха маса, кг", "dry mass, kg")],
+                      ["thrustVac", X("тяга (вакуум), Н", "thrust (vacuum), N")],
+                      ["ispVac", X("Isp вакуум, с", "Isp vacuum, s")],
+                      ...(i === 0 ? [["ispSl", X("Isp біля землі, с", "Isp sea level, s")]] : []),
+                      ["cdA", X("Cd·A, м²", "Cd·A, m²")],
                     ].map(([k, l]) => (
                       <label key={k}>
                         {l}
@@ -956,24 +982,24 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               </fieldset>
               {marsEntry && (
                 <fieldset className="m-live">
-                  <legend>EDL Марса (навчальні припущення)</legend>
+                  <legend>{X("EDL Марса (навчальні припущення)", "Mars EDL (educational assumptions)")}</legend>
                   <div className="m-params">
                     {[
-                      ["flightPathAngle_deg", "Кут входу γ, °"],
-                      ["aeroshellMass", "Маса аерооболонки, кг"],
-                      ["heatShieldMass", "з неї теплощит, кг"],
-                      ["aeroshellDiameter", "Діаметр, м"],
-                      ["cdHypersonic", "Cd гіперзвук"],
-                      ["noseRadius", "Радіус носка, м"],
+                      ["flightPathAngle_deg", X("Кут входу γ, °", "Entry flight-path angle γ, °")],
+                      ["aeroshellMass", X("Маса аерооболонки, кг", "Aeroshell mass, kg")],
+                      ["heatShieldMass", X("з неї теплощит, кг", "of which heat shield, kg")],
+                      ["aeroshellDiameter", X("Діаметр, м", "Diameter, m")],
+                      ["cdHypersonic", X("Cd гіперзвук", "Hypersonic Cd")],
+                      ["noseRadius", X("Радіус носка, м", "Nose radius, m")],
                       ["liftToDrag", "L/D"],
-                      ["chuteDiameter", "Парашут: діаметр, м"],
-                      ["chuteCd", "Парашут: Cd"],
-                      ["chuteMachMax", "Розкриття при M ≤"],
-                      ["chuteMachMin", "Мін. M розкриття"],
-                      ["chuteQMax", "Макс. q розкриття, Па"],
-                      ["poweredDescentAltitude", "Висота старту моторного спуску, м"],
-                      ["maxHeatFlux_Wcm2", "Допустимий тепловий потік, Вт/см²"],
-                      ["maxDecel_g", "Допустиме перевантаження, g₀"],
+                      ["chuteDiameter", X("Парашут: діаметр, м", "Parachute: diameter, m")],
+                      ["chuteCd", X("Парашут: Cd", "Parachute: Cd")],
+                      ["chuteMachMax", X("Розкриття при M ≤", "Deploy at M ≤")],
+                      ["chuteMachMin", X("Мін. M розкриття", "Min deploy Mach")],
+                      ["chuteQMax", X("Макс. q розкриття, Па", "Max deploy q, Pa")],
+                      ["poweredDescentAltitude", X("Висота старту моторного спуску, м", "Powered-descent start altitude, m")],
+                      ["maxHeatFlux_Wcm2", X("Допустимий тепловий потік, Вт/см²", "Allowed heat flux, W/cm²")],
+                      ["maxDecel_g", X("Допустиме перевантаження, g₀", "Allowed deceleration, g₀")],
                     ].map(([k, l]) => (
                       <label key={k}>
                         {l}
@@ -991,25 +1017,25 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
         <section className="m-center">
           <div className="m-tabs" role="tablist">
             <button role="tab" aria-selected={centerTab === "map"} className={centerTab === "map" ? "active" : ""} onClick={() => setCenterTab("map")}>
-              2D-карта
+              {X("2D-карта", "2D map")}
             </button>
             <button role="tab" aria-selected={centerTab === "3d"} className={centerTab === "3d" ? "active" : ""} onClick={() => setCenterTab("3d")}>
               3D
             </button>
             <span className="m-sep" />
-            <select aria-label="Шар" value={layer} onChange={(e) => setLayer(e.target.value)}>
+            <select aria-label={X("Шар", "Layer")} value={layer} onChange={(e) => setLayer(e.target.value)}>
               {LAYERS.map((l) => (
                 <option key={l.id} value={l.id}>
-                  {l.label}
+                  {lang === "en" ? l.labelEn : l.label}
                 </option>
               ))}
             </select>
             <label className="m-check">
-              <input type="checkbox" checked={showContours} onChange={(e) => setShowContours(e.target.checked)} /> горизонталі
+              <input type="checkbox" checked={showContours} onChange={(e) => setShowContours(e.target.checked)} /> {X("горизонталі", "contours")}
             </label>
             {centerTab === "3d" && (
               <label className="m-check">
-                верт. ×
+                {X("верт. ×", "vert. ×")}
                 <input type="number" min="1" max="20" step="0.5" value={exaggeration} onChange={(e) => setExaggeration(Math.max(1, Math.min(20, +e.target.value)))} style={{ width: "4em" }} />
               </label>
             )}
@@ -1037,41 +1063,41 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
           {centerTab === "3d" && (
             <div className="m-3d">
               {webglError ? (
-                <p className="m-error">{webglError}</p>
+                <p className="m-error">{pick(webglError, lang)}</p>
               ) : (
-                <canvas ref={sceneCanvas} aria-label="3D-перегляд рельєфу й траєкторії" />
+                <canvas ref={sceneCanvas} aria-label={X("3D-перегляд рельєфу й траєкторії", "3D view of terrain and trajectory")} />
               )}
               <div className="m-hud" aria-live="off">
                 <b>{current?.phase?.label || "—"}</b>
                 {current?.utc && (
                   <span>
-                    {formatUtc(current.utc)} · {formatZone(current.utc, "Europe/Kyiv")}
+                    {formatUtc(current.utc)} · {formatZone(current.utc, "Europe/Kyiv", lang === "en" ? "en-GB" : "uk-UA")}
                   </span>
                 )}
                 {current?.utc && phases[0] && <span>T+ {formatDuration((current.utc - phases[0].start) / 1000)}</span>}
                 {current?.phaseState && (
                   <>
-                    <span>висота {r1(current.phaseState.h / 1000, 2)} км</span>
-                    <span>швидкість {r1(current.phaseState.v, 0)} м/с</span>
-                    {current.phaseState.q_Wcm2 !== undefined && <span>тепловий потік {r1(current.phaseState.q_Wcm2, 1)} Вт/см² · {r1(current.phaseState.decel_g, 1)} g₀</span>}
-                    {current.phaseState.stage !== undefined && <span>ступінь {Math.round(current.phaseState.stage)} · маса {r1(current.phaseState.m / 1000, 1)} т</span>}
+                    <span>{X("висота", "altitude")} {r1(current.phaseState.h / 1000, 2)} {X("км", "km")}</span>
+                    <span>{X("швидкість", "speed")} {r1(current.phaseState.v, 0)} {X("м/с", "m/s")}</span>
+                    {current.phaseState.q_Wcm2 !== undefined && <span>{X("тепловий потік", "heat flux")} {r1(current.phaseState.q_Wcm2, 1)} {X("Вт/см²", "W/cm²")} · {r1(current.phaseState.decel_g, 1)} g₀</span>}
+                    {current.phaseState.stage !== undefined && <span>{X("ступінь", "stage")} {Math.round(current.phaseState.stage)} · {X("маса", "mass")} {r1(current.phaseState.m / 1000, 1)} {X("т", "t")}</span>}
                   </>
                 )}
                 {cd && (
                   <>
-                    <span>висота над рельєфом {r1(cd.clearance, 1)} м</span>
-                    <span>швидкість {r1(Math.hypot(cd.vx, cd.vy, cd.vz), 1)} м/с</span>
-                    <span>паливо {r1(cd.fuel, 0)} кг</span>
-                    <span>тяга {r1(cd.thrust / 1000, 2)} кН</span>
+                    <span>{X("висота над рельєфом", "height above terrain")} {r1(cd.clearance, 1)} {X("м", "m")}</span>
+                    <span>{X("швидкість", "speed")} {r1(Math.hypot(cd.vx, cd.vy, cd.vz), 1)} {X("м/с", "m/s")}</span>
+                    <span>{X("паливо", "propellant")} {r1(cd.fuel, 0)} {X("кг", "kg")}</span>
+                    <span>{X("тяга", "thrust")} {r1(cd.thrust / 1000, 2)} {X("кН", "kN")}</span>
                   </>
                 )}
-                {scaleInfo && current?.phase?.id !== "descent" && <span className="m-muted">Відстані в масштабі; тіла збільшено: центр ×{r1(scaleInfo.center, 0)}, ціль ×{r1(scaleInfo.target, 0)}; {scaleInfo.craft}</span>}
-                {current?.phase?.id === "descent" && <span className="m-muted">Апарат збільшено для видимості; верт. перебільшення ×{exaggeration} (лише відображення)</span>}
+                {scaleInfo && current?.phase?.id !== "descent" && <span className="m-muted">{X(`Відстані в масштабі; тіла збільшено: центр ×${r1(scaleInfo.center, 0)}, ціль ×${r1(scaleInfo.target, 0)}; маркер апарата — символ, не в масштабі`, `Distances to scale; bodies enlarged: centre ×${r1(scaleInfo.center, 0)}, target ×${r1(scaleInfo.target, 0)}; spacecraft marker is a symbol, not to scale`)}</span>}
+                {current?.phase?.id === "descent" && <span className="m-muted">{X(`Апарат збільшено для видимості; верт. перебільшення ×${exaggeration} (лише відображення)`, `Lander enlarged for visibility; vertical exaggeration ×${exaggeration} (display only)`)}</span>}
               </div>
-              <div className="m-cam" role="group" aria-label="Камера">
+              <div className="m-cam" role="group" aria-label={X("Камера", "Camera")}>
                 {["overview", "follow", "landing"].map((m) => (
                   <button key={m} className={cam === m ? "active" : ""} onClick={() => setCam(m)}>
-                    {{ overview: "огляд", follow: "супровід", landing: "посадка" }[m]}
+                    {lang === "en" ? { overview: "overview", follow: "follow", landing: "landing" }[m] : { overview: "огляд", follow: "супровід", landing: "посадка" }[m]}
                   </button>
                 ))}
               </div>
@@ -1080,60 +1106,69 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
         </section>
 
         {/* ------------------------------------------------ RIGHT: verdicts */}
-        <aside className="m-right" aria-label={tr("Висновки")}>
-          {!analysis && <p className="m-muted">Обери точку на карті й натисни «Розрахувати». Три картки нижче оцінюються незалежно; відсоток «успіху» не показується, бо немає відкаліброваної ймовірнісної моделі.</p>}
-          <VerdictCard card={analysis?.card} stale={staleT} />
+        <aside className="m-right" aria-label={X("Висновки", "Conclusions")}>
+          {!analysis && <p className="m-muted">{X("Обери точку на карті й натисни «Розрахувати». Три картки нижче оцінюються незалежно; відсоток «успіху» не показується, бо немає відкаліброваної ймовірнісної моделі.", "Pick a point on the map and press “Compute”. The three cards below are assessed independently; no “success” percentage is shown because there is no calibrated probabilistic model.")}</p>}
+          <VerdictCard card={cardTerrain} stale={staleT} />
           {analysis && (
             <p className="m-muted">
-              Еліпс: {analysis.regionStats.count} пікс.; висоти {r1(analysis.regionStats.min)}…{r1(analysis.regionStats.max)} м (сер. {r1(analysis.regionStats.mean)}), перепад {r1(analysis.regionStats.relief)} м; ухил сер. {r1(analysis.regionStats.slopeMean)}°, експозиція сер. {r1(analysis.regionStats.aspectMean, 0)}°; nodata {r1(analysis.regionStats.nodataFraction * 100)} %.
+              {X(
+                `Еліпс: ${analysis.regionStats.count} пікс.; висоти ${r1(analysis.regionStats.min)}…${r1(analysis.regionStats.max)} м (сер. ${r1(analysis.regionStats.mean)}), перепад ${r1(analysis.regionStats.relief)} м; ухил сер. ${r1(analysis.regionStats.slopeMean)}°, експозиція сер. ${r1(analysis.regionStats.aspectMean, 0)}°; nodata ${r1(analysis.regionStats.nodataFraction * 100)} %.`,
+                `Ellipse: ${analysis.regionStats.count} px; elevation ${r1(analysis.regionStats.min)}…${r1(analysis.regionStats.max)} m (mean ${r1(analysis.regionStats.mean)}), relief ${r1(analysis.regionStats.relief)} m; mean slope ${r1(analysis.regionStats.slopeMean)}°, mean aspect ${r1(analysis.regionStats.aspectMean, 0)}°; nodata ${r1(analysis.regionStats.nodataFraction * 100)} %.`,
+              )}
             </p>
           )}
-          <VerdictCard card={res.descent?.card} stale={staleD} />
+          <VerdictCard card={cardLanding} stale={staleD} />
           {descent && (
             <p className="m-muted">
-              {descent.model}; dt = {descent.dt} с; Δv використано {r1(descent.usedDeltaV, 0)} з {r1(descent.idealDeltaV, 0)} м/с ідеальних; T/W = {r1(descent.thrustToWeight, 2)}.
+              {descent.model}; dt = {descent.dt} {X("с", "s")}; {X(`Δv використано ${r1(descent.usedDeltaV, 0)} з ${r1(descent.idealDeltaV, 0)} м/с ідеальних`, `Δv used ${r1(descent.usedDeltaV, 0)} of ${r1(descent.idealDeltaV, 0)} m/s ideal`)}; T/W = {r1(descent.thrustToWeight, 2)}.
             </p>
           )}
-          <VerdictCard card={res.transfer?.card} stale={staleX} />
+          <VerdictCard card={cardTransfer} stale={staleX} />
           {transfer?.best && (
             <div className="m-muted m-transfer-sum">
               <p>
-                Відліт: <b>{formatUtc(transfer.best.depUtc)}</b> ({formatZone(transfer.best.depUtc, "Europe/Kyiv")})<br />
-                Прибуття: <b>{formatUtc(transfer.best.arrUtc)}</b> · {r1(transfer.best.tof / 86400, 2)} діб
+                {X("Відліт", "Departure")}: <b>{formatUtc(transfer.best.depUtc)}</b> ({formatZone(transfer.best.depUtc, "Europe/Kyiv", lang === "en" ? "en-GB" : "uk-UA")})<br />
+                {X("Прибуття", "Arrival")}: <b>{formatUtc(transfer.best.arrUtc)}</b> · {r1(transfer.best.tof / 86400, 2)} {X("діб", "days")}
               </p>
-              <p>{transfer.best.dvBreakdown}</p>
-              {transfer.best.vinfArr !== undefined && <p>v∞ прибуття {r1(transfer.best.vinfArr, 0)} м/с{transfer.best.c3 !== undefined && body === "mars" ? `; C3 ${r1(transfer.best.c3 / 1e6, 1)} км²/с²` : ""}</p>}
-              {(transfer.best.onBoundary?.tof || transfer.best.onBoundary?.departure) && <p className="m-warn">Оптимум на межі сітки пошуку — розшир вікно/діапазон тривалості.</p>}
+              <p>{dvBreakdown(transfer.best, lang)}</p>
+              {transfer.best.vinfArr !== undefined && <p>{X("v∞ прибуття", "arrival v∞")} {r1(transfer.best.vinfArr, 0)} {X("м/с", "m/s")}{transfer.best.c3 !== undefined && body === "mars" ? `; C3 ${r1(transfer.best.c3 / 1e6, 1)} ${X("км²/с²", "km²/s²")}` : ""}</p>}
+              {(transfer.best.onBoundary?.tof || transfer.best.onBoundary?.departure) && <p className="m-warn">{X("Оптимум на межі сітки пошуку — розшир вікно/діапазон тривалості.", "Optimum lies on the search-grid boundary — widen the window / flight-time range.")}</p>}
               <p>
-                {transfer.model}; {transfer.ephemeris}. Замикання дуги: {r1(transfer.best.arc.closureError_m, 1)} м.
+                {transfer.model}; {transfer.ephemeris}. {X("Замикання дуги", "Arc closure")}: {r1(transfer.best.arc.closureError_m, 1)} {X("м", "m")}.
               </p>
               {ascentRes?.ok && (
                 <p>
-                  Виведення (симуляція): орбіта {r1(ascentRes.perigeeAlt / 1000, 0)}×{r1(ascentRes.apogeeAlt / 1000, 0)} км за {r1(ascentRes.t / 60, 1)} хв; втрати — гравітаційні {r1(ascentRes.gravityLoss, 0)}, аеродинамічні {r1(ascentRes.dragLoss, 0)}, керування {r1(ascentRes.steeringLoss, 0)} м/с; обертання Землі +{r1(ascentRes.rotationBonus, 0)} м/с.
+                  {X(
+                    `Виведення (симуляція): орбіта ${r1(ascentRes.perigeeAlt / 1000, 0)}×${r1(ascentRes.apogeeAlt / 1000, 0)} км за ${r1(ascentRes.t / 60, 1)} хв; втрати — гравітаційні ${r1(ascentRes.gravityLoss, 0)}, аеродинамічні ${r1(ascentRes.dragLoss, 0)}, керування ${r1(ascentRes.steeringLoss, 0)} м/с; обертання Землі +${r1(ascentRes.rotationBonus, 0)} м/с.`,
+                    `Ascent (simulated): orbit ${r1(ascentRes.perigeeAlt / 1000, 0)}×${r1(ascentRes.apogeeAlt / 1000, 0)} km in ${r1(ascentRes.t / 60, 1)} min; losses — gravity ${r1(ascentRes.gravityLoss, 0)}, drag ${r1(ascentRes.dragLoss, 0)}, steering ${r1(ascentRes.steeringLoss, 0)} m/s; Earth rotation +${r1(ascentRes.rotationBonus, 0)} m/s.`,
+                  )}
                 </p>
               )}
               {edlRes && (
                 <p>
-                  EDL: вхід {r1(edlRes.entry.speedRelative, 0)} м/с відносно атмосфери (поправка на обертання {r1(edlRes.entry.rotationCorrection, 0)} м/с), γ {edlRes.entry.flightPathAngle_deg}°; пік {r1(edlRes.peakHeatFlux_Wcm2, 1)} Вт/см² і {r1(edlRes.peakDecel_g, 1)} g₀; на старті моторного спуску v = {r1(edlRes.end.v, 1)} м/с на висоті {r1(edlRes.end.h, 0)} м.
+                  {X(
+                    `EDL: вхід ${r1(edlRes.entry.speedRelative, 0)} м/с відносно атмосфери (поправка на обертання ${r1(edlRes.entry.rotationCorrection, 0)} м/с), γ ${edlRes.entry.flightPathAngle_deg}°; пік ${r1(edlRes.peakHeatFlux_Wcm2, 1)} Вт/см² і ${r1(edlRes.peakDecel_g, 1)} g₀; на старті моторного спуску v = ${r1(edlRes.end.v, 1)} м/с на висоті ${r1(edlRes.end.h, 0)} м.`,
+                    `EDL: entry at ${r1(edlRes.entry.speedRelative, 0)} m/s relative to the atmosphere (rotation correction ${r1(edlRes.entry.rotationCorrection, 0)} m/s), γ ${edlRes.entry.flightPathAngle_deg}°; peak ${r1(edlRes.peakHeatFlux_Wcm2, 1)} W/cm² and ${r1(edlRes.peakDecel_g, 1)} g₀; at powered-descent start v = ${r1(edlRes.end.v, 1)} m/s at ${r1(edlRes.end.h, 0)} m.`,
+                  )}
                 </p>
               )}
               {caps?.horizons ? (
                 <button className="text-button" onClick={checkHorizons}>
-                  Звірити ефемериду цілі з JPL Horizons
+                  {X("Звірити ефемериду цілі з JPL Horizons", "Check the target ephemeris against JPL Horizons")}
                 </button>
               ) : (
-                <p>Звірка з JPL Horizons доступна лише в Node-версії.</p>
+                <p>{X("Звірка з JPL Horizons доступна лише в Node-версії.", "The JPL Horizons check is available in the Node version only.")}</p>
               )}
               {hzCheck?.diff_km !== undefined && (
                 <p>
-                  Horizons ({hzCheck.utc}): різниця положення цілі {r1(hzCheck.diff_km, 0)} км.
+                  Horizons ({hzCheck.utc}): {X("різниця положення цілі", "target position difference")} {r1(hzCheck.diff_km, 0)} {X("км", "km")}.
                 </p>
               )}
-              {hzCheck?.error && <p className="m-error">{hzCheck.error}</p>}
+              {hzCheck?.error && <p className="m-error">{pick(hzCheck.error, lang)}</p>}
             </div>
           )}
           <p className="m-muted">
-            «Перешкоди навколо» перевіряються лише як рельєф DEM і поверхня тіла. Космічне сміття, супутники та інші апарати не моделюються.
+            {X("«Перешкоди навколо» перевіряються лише як рельєф DEM і поверхня тіла. Космічне сміття, супутники та інші апарати не моделюються.", "“Obstacles” are checked only as DEM terrain and the body surface. Space debris, satellites and other spacecraft are not modelled.")}
           </p>
         </aside>
       </div>
@@ -1141,14 +1176,14 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       {/* ------------------------------------------------ BOTTOM: timeline + charts */}
       <section className="m-bottom">
         <div className="m-timeline">
-          <button onClick={() => setPlay((p) => ({ ...p, playing: !p.playing }))} disabled={!phases.length} aria-label={play.playing ? "Пауза" : "Відтворити"}>
+          <button onClick={() => setPlay((p) => ({ ...p, playing: !p.playing }))} disabled={!phases.length} aria-label={play.playing ? X("Пауза", "Pause") : X("Відтворити", "Play")}>
             {play.playing ? "⏸" : "▶"}
           </button>
-          <button onClick={() => setPlay((p) => ({ ...p, phase: 0, local: 0, playing: false }))} disabled={!phases.length} aria-label="Скинути">
+          <button onClick={() => setPlay((p) => ({ ...p, phase: 0, local: 0, playing: false }))} disabled={!phases.length} aria-label={X("Скинути", "Reset")}>
             ⏮
           </button>
-          <input type="range" min="0" max="1000" value={sliderValue} onChange={(e) => seekSlider(+e.target.value)} disabled={!phases.length} aria-label="Перемотування (шкала нелінійна за фазами)" />
-          <select value={play.speed} onChange={(e) => setPlay((p) => ({ ...p, speed: +e.target.value }))} aria-label="Швидкість перегляду">
+          <input type="range" min="0" max="1000" value={sliderValue} onChange={(e) => seekSlider(+e.target.value)} disabled={!phases.length} aria-label={X("Перемотування (шкала нелінійна за фазами)", "Scrub (scale is non-linear across phases)")} />
+          <select value={play.speed} onChange={(e) => setPlay((p) => ({ ...p, speed: +e.target.value }))} aria-label={X("Швидкість перегляду", "Playback speed")}>
             {[0.25, 1, 4, 16].map((v) => (
               <option key={v} value={v}>
                 {v}×
@@ -1159,7 +1194,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
             {phases.map((p, i) => (
               <li key={p.id} className={(i === play.phase ? "active " : "") + "m-kind-" + p.kind}>
                 <button onClick={() => setPlay((x) => ({ ...x, phase: i, local: 0 }))} title={p.model}>
-                  {p.label} <small>({{ computed: "розраховано", estimated: "оцінка", assumed: "припущення" }[p.kind]})</small>
+                  {p.label} <small>({(lang === "en" ? { computed: "computed", estimated: "estimate", assumed: "assumption" } : { computed: "розраховано", estimated: "оцінка", assumed: "припущення" })[p.kind]})</small>
                 </button>
               </li>
             ))}
@@ -1167,11 +1202,11 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
         </div>
         <div className="m-tabs" role="tablist">
           {[
-            ["profiles", "Профілі"],
-            ["descent", "Спуск"],
-            ["window", "Вікно старту"],
-            ["ascent", "Виведення й EDL"],
-            ["analogs", "Земні аналоги"],
+            ["profiles", X("Профілі", "Profiles")],
+            ["descent", X("Спуск", "Descent")],
+            ["window", X("Вікно старту", "Launch window")],
+            ["ascent", X("Виведення й EDL", "Ascent & EDL")],
+            ["analogs", X("Земні аналоги", "Earth analogs")],
           ].map(([id, l]) => (
             <button key={id} role="tab" aria-selected={bottomTab === id} className={bottomTab === id ? "active" : ""} onClick={() => setBottomTab(id)}>
               {l}
@@ -1188,8 +1223,8 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                       <div key={w}>
                         <ProfileChart
                           profile={profiles[w]}
-                          title={{ along: `Поздовжній (азимут ${approach}°)`, across: `Поперечний (азимут ${(approach + 90) % 360}°)`, poly: "Довільна полілінія" }[w]}
-                          datum={meta?.datum?.kind === "sphere" ? `сфера ${meta.datum.radius_m / 1000} км` : meta?.datum?.kind}
+                          title={{ along: X(`Поздовжній (азимут ${approach}°)`, `Along-track (azimuth ${approach}°)`), across: X(`Поперечний (азимут ${(approach + 90) % 360}°)`, `Cross-track (azimuth ${(approach + 90) % 360}°)`), poly: X("Довільна полілінія", "Custom polyline") }[w]}
+                          datum={meta?.datum?.kind === "sphere" ? X(`сфера ${meta.datum.radius_m / 1000} км`, `sphere ${meta.datum.radius_m / 1000} km`) : meta?.datum?.model || meta?.datum?.kind}
                           hoverIndex={hoverProfile.which === w ? hoverProfile.i : null}
                           onHover={(i) => setHoverProfile({ which: w, i })}
                         />
@@ -1199,10 +1234,10 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                       </div>
                     ),
                 )}
-                {staleT && <p className="m-stale-note">Профілі застарілі — перерахуй.</p>}
+                {staleT && <p className="m-stale-note">{X("Профілі застарілі — перерахуй.", "Profiles are stale — recompute.")}</p>}
               </>
             ) : (
-              <p className="m-muted">Профілі з'являться після розрахунку. Режим «полілінія» додає довільний профіль.</p>
+              <p className="m-muted">{X("Профілі з'являться після розрахунку. Режим «полілінія» додає довільний профіль.", "Profiles appear after computing. “Polyline” mode adds a custom profile.")}</p>
             )}
           </div>
         )}
@@ -1212,28 +1247,28 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               <>
                 <SeriesChart
                   samples={descent.samples}
-                  title="Висота й запас над рельєфом"
+                  title={X("Висота й запас над рельєфом", "Altitude and clearance above terrain")}
                   t={current?.phase?.id === "descent" ? current.local : NaN}
                   onSeek={(t) => setPlay((p) => ({ ...p, phase: phases.findIndex((x) => x.id === "descent"), local: t }))}
                   series={[
-                    { key: "z", label: "висота відн. цілі", color: "#60a5fa", unit: "м" },
-                    { key: "clearance", label: "clearance", color: "#34d399", unit: "м", dash: "4 3" },
+                    { key: "z", label: X("висота відн. цілі", "height rel. target"), color: "#60a5fa", unit: X("м", "m") },
+                    { key: "clearance", label: "clearance", color: "#34d399", unit: X("м", "m"), dash: "4 3" },
                   ]}
                 />
                 <SeriesChart
                   samples={descent.samples}
-                  title="Швидкість, паливо й тяга"
+                  title={X("Швидкість, паливо й тяга", "Speed, propellant and thrust")}
                   t={current?.phase?.id === "descent" ? current.local : NaN}
                   series={[
-                    { key: "vz", label: "v верт.", color: "#f472b6", unit: "м/с" },
-                    { key: "fuel", label: "паливо", color: "#fbbf24", unit: "кг", zero: true },
-                    { key: "thrust", label: "тяга", color: "#a78bfa", unit: "Н", dash: "3 3", zero: true },
+                    { key: "vz", label: X("v верт.", "v vert."), color: "#f472b6", unit: X("м/с", "m/s") },
+                    { key: "fuel", label: X("паливо", "propellant"), color: "#fbbf24", unit: X("кг", "kg"), zero: true },
+                    { key: "thrust", label: X("тяга", "thrust"), color: "#a78bfa", unit: X("Н", "N"), dash: "3 3", zero: true },
                   ]}
                 />
-                {staleD && <p className="m-stale-note">Симуляція застаріла — перерахуй.</p>}
+                {staleD && <p className="m-stale-note">{X("Симуляція застаріла — перерахуй.", "Simulation is stale — recompute.")}</p>}
               </>
             ) : (
-              <p className="m-muted">Немає симуляції.</p>
+              <p className="m-muted">{X("Немає симуляції.", "No simulation.")}</p>
             )}
           </div>
         )}
@@ -1242,50 +1277,53 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
             {ascentRes?.ok ? (
               <SeriesChart
                 samples={ascentRes.samples}
-                title="Виведення на НОО (симуляція)"
+                title={X("Виведення на НОО (симуляція)", "Ascent to LEO (simulation)")}
                 t={current?.phase?.id === "ascent" ? current.local : NaN}
                 series={[
-                  { key: "h", label: "висота", color: "#60a5fa", unit: "м", zero: true },
-                  { key: "v", label: "швидкість (інерц.)", color: "#fbbf24", unit: "м/с", zero: true },
-                  { key: "q", label: "динамічний тиск", color: "#f472b6", unit: "Па", dash: "3 3", zero: true },
+                  { key: "h", label: X("висота", "altitude"), color: "#60a5fa", unit: X("м", "m"), zero: true },
+                  { key: "v", label: X("швидкість (інерц.)", "speed (inertial)"), color: "#fbbf24", unit: X("м/с", "m/s"), zero: true },
+                  { key: "q", label: X("динамічний тиск", "dynamic pressure"), color: "#f472b6", unit: X("Па", "Pa"), dash: "3 3", zero: true },
                 ]}
               />
             ) : (
-              <p className="m-muted">{ascentRes ? "Виведення не вдалося: " + JSON.stringify(ascentRes.reasons) : "Немає результату виведення (лише для Місяця й Марса)."}</p>
+              <p className="m-muted">{ascentRes ? X("Виведення не вдалося: ", "Ascent failed: ") + JSON.stringify(ascentRes.reasons) : X("Немає результату виведення (лише для Місяця й Марса).", "No ascent result (Moon and Mars only).")}</p>
             )}
             {edlRes ? (
               <SeriesChart
                 samples={edlRes.samples}
-                title="EDL Марса до старту моторного спуску"
+                title={X("EDL Марса до старту моторного спуску", "Mars EDL to powered-descent start")}
                 t={current?.phase?.id === "arrival" ? current.local : NaN}
                 series={[
-                  { key: "h", label: "висота над місцевістю", color: "#60a5fa", unit: "м", zero: true },
-                  { key: "v", label: "швидкість відн. атмосфери", color: "#fbbf24", unit: "м/с", zero: true },
-                  { key: "q_Wcm2", label: "тепловий потік", color: "#f87171", unit: "Вт/см²", zero: true },
-                  { key: "decel_g", label: "перевантаження", color: "#a78bfa", unit: "g₀", dash: "3 3", zero: true },
+                  { key: "h", label: X("висота над місцевістю", "height above ground"), color: "#60a5fa", unit: X("м", "m"), zero: true },
+                  { key: "v", label: X("швидкість відн. атмосфери", "airspeed"), color: "#fbbf24", unit: X("м/с", "m/s"), zero: true },
+                  { key: "q_Wcm2", label: X("тепловий потік", "heat flux"), color: "#f87171", unit: X("Вт/см²", "W/cm²"), zero: true },
+                  { key: "decel_g", label: X("перевантаження", "deceleration"), color: "#a78bfa", unit: "g₀", dash: "3 3", zero: true },
                 ]}
               />
             ) : (
-              body === "mars" && <p className="m-muted">EDL розраховується в режимі «прямий вхід».</p>
+              body === "mars" && <p className="m-muted">{X("EDL розраховується в режимі «прямий вхід».", "EDL is computed in “direct entry” mode.")}</p>
             )}
           </div>
         )}
         {bottomTab === "window" && (
-          <div className="m-charts">{transfer?.best ? <Porkchop transfer={transfer} /> : <p className="m-muted">{transfer?.note || "Пошук вікна ще не виконано."}</p>}</div>
+          <div className="m-charts">{transfer?.best ? <Porkchop transfer={transfer} /> : <p className="m-muted">{body === "earth" ? X("Ціль — Земля: переліт не застосовується.", "Target is Earth: no transfer.") : X("Пошук вікна ще не виконано.", "Launch-window search not run yet.")}</p>}</div>
         )}
         {bottomTab === "analogs" && (
           <div className="m-charts m-analogs">
             <p>
-              Порівняння морфометрії всієї вирізки {meta?.name} з {body === "earth" ? "місячними/марсіанськими" : "земними"} ділянками. Масштаби узгоджуються блочним усередненням до спільного пікселя, ділянки обрізаються до однакової площі. Подібність ≠ ймовірність безпечної посадки.
+              {X(
+                `Порівняння морфометрії всієї вирізки ${meta?.name} з ${body === "earth" ? "місячними/марсіанськими" : "земними"} ділянками. Масштаби узгоджуються блочним усередненням до спільного пікселя, ділянки обрізаються до однакової площі. Подібність ≠ ймовірність безпечної посадки і ≠ геологічна тотожність.`,
+                `Morphometric comparison of the whole ${meta?.name} cut-out with ${body === "earth" ? "lunar/Martian" : "Earth"} sites. Scales are matched by block averaging to a common pixel and sites are cropped to the same area. Similarity ≠ probability of a safe landing and ≠ geological identity.`,
+              )}
             </p>
             <button className="action secondary" onClick={runAnalogs} disabled={!!busy || !meta}>
-              ⇄ Порівняти
+              ⇄ {X("Порівняти", "Compare")}
             </button>
-            {staleA && <p className="m-stale-note">Застаріло — інша ділянка.</p>}
+            {staleA && <p className="m-stale-note">{X("Застаріло — інша ділянка.", "Stale — different site.")}</p>}
             {layers?.hist && (
               <div className="m-hist-wrap">
-                <span>Розподіл ухилів цілі (°, Horn 3×3)</span>
-                <SlopeHistogram hist={layers.hist} maxSlope={L.maxSlope} label="Гістограма ухилів цільової ділянки" />
+                <span>{X("Розподіл ухилів цілі (°, Horn 3×3)", "Target slope distribution (°, Horn 3×3)")}</span>
+                <SlopeHistogram hist={layers.hist} maxSlope={L.maxSlope} label={X("Гістограма ухилів цільової ділянки", "Slope histogram of the target site")} />
               </div>
             )}
             {res.analogs && (
@@ -1293,16 +1331,16 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 <table className="m-table">
                   <thead>
                     <tr>
-                      <th>Кандидат</th>
-                      <th>Подібність</th>
-                      <th>Покриття метрик</th>
-                      <th>Спільний масштаб</th>
-                      <th>Δ ухили (EMD)</th>
+                      <th>{X("Кандидат", "Candidate")}</th>
+                      <th>{X("Подібність", "Similarity")}</th>
+                      <th>{X("Покриття метрик", "Metric coverage")}</th>
+                      <th>{X("Спільний масштаб", "Common scale")}</th>
+                      <th>{X("Δ ухили (EMD)", "Δ slopes (EMD)")}</th>
                       <th>Δ P90</th>
-                      <th>Δ шорсткість</th>
-                      <th>Δ перепад</th>
-                      <th>Ознаки з каталогу</th>
-                      <th>Примітки</th>
+                      <th>{X("Δ шорсткість", "Δ roughness")}</th>
+                      <th>{X("Δ перепад", "Δ relief")}</th>
+                      <th>{X("Ознаки з каталогу", "Catalogue traits")}</th>
+                      <th>{X("Примітки", "Notes")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1313,7 +1351,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                         const row = (id) => a.rows?.find((r) => r.id === id);
                         const cell = (id) => {
                           const r = row(id);
-                          return r?.available ? r.difference.toFixed(2) : "немає";
+                          return r?.available ? r.difference.toFixed(2) : X("немає", "n/a");
                         };
                         return (
                           <tr key={a.id}>
@@ -1322,26 +1360,36 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                               <br />
                               <small>{a.meta?.source?.productId}</small>
                             </td>
-                            <td>{a.score === null || a.score === undefined ? "недостатньо даних" : a.score.toFixed(2)}</td>
+                            <td>{a.score === null || a.score === undefined ? X("недостатньо даних", "insufficient data") : a.score.toFixed(2)}</td>
                             <td>{a.coverage !== undefined ? Math.round(a.coverage * 100) + " %" : "—"}</td>
-                            <td>{a.commonPixel_m ? `${r1(a.commonPixel_m, 0)} м/пікс., ${r1(a.extent_m / 1000, 1)} км` : "—"}</td>
+                            <td>{a.commonPixel_m ? `${r1(a.commonPixel_m, 0)} ${X("м/пікс.", "m/px")}, ${r1(a.extent_m / 1000, 1)} ${X("км", "km")}` : "—"}</td>
                             <td>{cell("slopeHist")}</td>
                             <td>{cell("slopeP90")}</td>
                             <td>{cell("roughness")}</td>
                             <td>{cell("relief")}</td>
-                            <td>{cat?.science ? cat.science.traits.map((id) => tr(criteria.find((c) => c.id === id)?.label || id)).join(", ") || "—" : "кандидат (ознаки не задокументовані)"}</td>
-                            <td>{(a.flags || []).join("; ") || "—"}</td>
+                            <td>{cat?.science ? cat.science.traits.map((id) => tr(criteria.find((c) => c.id === id)?.label || id)).join(", ") || "—" : X("кандидат (ознаки не задокументовані)", "candidate (traits not documented)")}</td>
+                            <td>{(a.flags || []).map((f) => flagText(f)).join("; ") || "—"}</td>
                           </tr>
                         );
                       })}
                   </tbody>
                 </table>
                 <p className="m-muted">
-                  Нормування: EMD/10°, |ΔP90|/10°, |log10 відношення| для шорсткості й перепаду (1 = декада); кожну різницю обмежено 1. Ваги: розподіл 0.4, P90 0.2, шорсткість 0.2, перепад 0.2. Відсутні метрики не вважаються нульовою різницею: вони зменшують покриття, і при покритті нижче 60 % рейтинг не показується.
+                  {X(
+                    "Нормування: EMD/10°, |ΔP90|/10°, |log10 відношення| для шорсткості й перепаду (1 = декада); кожну різницю обмежено 1. Ваги: розподіл 0.4, P90 0.2, шорсткість 0.2, перепад 0.2. Відсутні метрики не вважаються нульовою різницею: вони зменшують покриття, і при покритті нижче 60 % рейтинг не показується.",
+                    "Normalisation: EMD/10°, |ΔP90|/10°, |log10 ratio| for roughness and relief (1 = one decade); each difference is capped at 1. Weights: distribution 0.4, P90 0.2, roughness 0.2, relief 0.2. Missing metrics are not counted as zero difference: they reduce coverage, and below 60 % coverage no rating is shown.",
+                  )}
                 </p>
                 <p className="m-muted">
-                  Придатний для: тестів навігації, мобільності й датчиків небезпек на масштабі спільного пікселя, якщо розподіли ухилів близькі. Не відтворює ({body === "mars" ? "Марс" : body === "moon" ? "Місяць" : "Місяць/Марс"}):{" "}
-                  {(ANALOG_LIMITS[body] || [...ANALOG_LIMITS.moon, ...ANALOG_LIMITS.mars]).join("; ")}.
+                  {X(
+                    "Придатний для: тестів навігації, мобільності й датчиків небезпек на масштабі спільного пікселя, якщо розподіли ухилів близькі. Не відтворює",
+                    "Suitable for: navigation, mobility and hazard-sensor tests at the common pixel scale when slope distributions are close. Does not reproduce",
+                  )}{" "}
+                  ({BODY_NAME[lang === "en" ? "en" : "uk"][body === "earth" ? "moon" : body]}{body === "earth" ? "/" + BODY_NAME[lang === "en" ? "en" : "uk"].mars : ""}):{" "}
+                  {(() => {
+                    const lim = ANALOG_LIMITS_I18N[lang === "en" ? "en" : "uk"];
+                    return (lim[body] || [...lim.moon, ...lim.mars]).join("; ");
+                  })()}.
                 </p>
               </div>
             )}

@@ -193,3 +193,23 @@ test("transfer card uses simulated ascent and EDL instead of assumptions", () =>
   assert.ok(ids.includes("launcher") && ids.includes("edl-heat") && ids.includes("edl-g"));
   assert.ok(!card.criteria.some((c) => c.status === "insufficient" && c.id === "edl"), "EDL is computed, not 'insufficient'");
 });
+
+test("verdict cards are fully localised: English output contains no Cyrillic", async () => {
+  const { terrainCard: tc, landingCard: lc, transferCard: xc } = await import("./assessment.js");
+  const cyr = /[А-Яа-яІіЇїЄєҐґ]/;
+  const g = flat(60, 5, (c) => c * 0.3);
+  const lander = values(presetById("edu-robotic").lander);
+  const d = simulateDescent({ grid: g, col: 30, row: 30, bodyId: "moon", lander, start: { altitude: 800, downrange: 100, approachAzimuth: 0, horizontalSpeed: 10, verticalSpeed: -10 } });
+  const stack = values(STACK_DEFAULTS);
+  const m = planTransfer({ target: "mars", launchUtc: Date.UTC(2026, 9, 1), windowDays: 30, tofMinDays: 180, tofMaxDays: 260, launchLat: 28.57, stack, landerMass: 1900, arrivalMode: "entry" });
+  const ev = edlValues(values(presetById("edu-mars").edl), 1300);
+  const edl = simulateEDL({ entrySpeedInertial: m.best.entrySpeed, entryAltitude: 125000, flightPathAngle_deg: -12.5, entryAzimuth_deg: 90, latitude_deg: 18, siteElevation_m: -2600, vehicle: ev });
+  const cards = [tc(g, { col: 30, row: 30 }, lander, { a_m: 40, b_m: 20, azimuth_deg: 0 }, "en"), lc(d, lander, "en"), xc(m, stack, { edl, edlVehicle: ev }, "en"), lc(null, lander, "en"), xc({ applicable: false }, stack, {}, "en")];
+  for (const card of cards) {
+    for (const t of [card.title, card.error, card.note, ...(card.unassessed || [])]) if (t) assert.ok(!cyr.test(t), "EN text: " + t);
+    for (const c of card.criteria) for (const k of ["label", "threshold", "method", "reason", "unit"]) if (typeof c[k] === "string") assert.ok(!cyr.test(c[k]), `${card.id}.${c.id}.${k}: ${c[k]}`);
+  }
+  // Ukrainian is still the default
+  assert.equal(cards[0].title, "Terrain");
+  assert.equal(tc(g, { col: 30, row: 30 }, lander, { a_m: 40, b_m: 20, azimuth_deg: 0 }).title, "Рельєф");
+});

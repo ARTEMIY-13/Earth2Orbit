@@ -1,14 +1,18 @@
-import { STATUS_LABELS } from "../../../shared/mission/assessment.js";
+import { STATUS_LABELS_I18N } from "../../../shared/mission/assessment.js";
+import { useLang } from "../../i18n/LanguageContext.jsx";
 
 const ICON = { pass: "✓", fail: "✕", insufficient: "?", na: "–" };
 
-const fmtValue = (c) => {
-  if (c.value === null || c.value === undefined) return "немає даних";
+const fmtValue = (c, x) => {
+  if (c.value === null || c.value === undefined) return x("немає даних", "no data");
   if (Array.isArray(c.value)) return "—";
   return `${c.value}${c.unit ? " " + c.unit : ""}`;
 };
 
 export default function VerdictCard({ card, stale }) {
+  const { lang } = useLang();
+  const x = (uk, en) => (lang === "en" ? en : uk);
+  const STATUS_LABELS = STATUS_LABELS_I18N[lang] || STATUS_LABELS_I18N.uk;
   if (!card) return null;
   return (
     <section className={`m-card m-${card.status}${stale ? " m-stale" : ""}`} aria-label={`${card.title}: ${STATUS_LABELS[card.status]}`}>
@@ -18,7 +22,7 @@ export default function VerdictCard({ card, stale }) {
           <b aria-hidden="true">{ICON[card.status]}</b> {STATUS_LABELS[card.status]}
         </span>
       </header>
-      {stale && <p className="m-stale-note">Результат застарів: вхідні дані змінено. Перерахуй.</p>}
+      {stale && <p className="m-stale-note">{x("Результат застарів: вхідні дані змінено. Перерахуй.", "Result is stale: inputs changed. Recompute.")}</p>}
       {card.error && <p className="m-muted">{card.error}</p>}
       {card.note && <p className="m-muted">{card.note}</p>}
       {card.criteria?.length > 0 && (
@@ -26,10 +30,10 @@ export default function VerdictCard({ card, stale }) {
           <table className="m-table">
             <thead>
               <tr>
-                <th>Критерій</th>
-                <th>Значення</th>
-                <th>Поріг</th>
-                <th>Статус</th>
+                <th>{x("Критерій", "Criterion")}</th>
+                <th>{x("Значення", "Value")}</th>
+                <th>{x("Поріг", "Threshold")}</th>
+                <th>{x("Статус", "Status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -37,21 +41,21 @@ export default function VerdictCard({ card, stale }) {
                 <tr key={c.id} className={"m-row-" + c.status}>
                   <td>
                     {c.label}
-                    {c.critical === false && <small> (інф.)</small>}
+                    {c.critical === false && <small> ({x("інф.", "info")})</small>}
                     <details>
-                      <summary>метод і джерело</summary>
+                      <summary>{x("метод і джерело", "method & source")}</summary>
                       <p>
-                        <b>Метод:</b> {c.method}
+                        <b>{x("Метод", "Method")}:</b> {c.method}
                       </p>
                       <p>
-                        <b>Джерело:</b> {c.source}
+                        <b>{x("Джерело", "Source")}:</b> {c.source}
                       </p>
                       <p>
-                        <b>Причина:</b> {c.reason}
+                        <b>{x("Причина", "Reason")}:</b> {c.reason}
                       </p>
                     </details>
                   </td>
-                  <td>{fmtValue(c)}</td>
+                  <td>{fmtValue(c, x)}</td>
                   <td>{c.threshold}</td>
                   <td>
                     <span aria-hidden="true">{ICON[c.status]}</span> {STATUS_LABELS[c.status]}
@@ -64,7 +68,7 @@ export default function VerdictCard({ card, stale }) {
       )}
       {card.unassessed?.length > 0 && (
         <details className="m-unassessed">
-          <summary>Не оцінено ({card.unassessed.length})</summary>
+          <summary>{x("Не оцінено", "Not assessed")} ({card.unassessed.length})</summary>
           <ul>
             {card.unassessed.map((u) => (
               <li key={u}>{u}</li>

@@ -7,7 +7,7 @@
    "body": "earth",
    "name": "Atacama Desert (Yungay area) (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-0",
@@ -20,7 +20,7 @@
     "productId": "Copernicus_DSM_COG_10_S25_00_W071_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -28,11 +28,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -45,10 +45,10 @@
     "dLon": 0.004166666666666667
    },
    "resolution_m": 442.7,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -58,7 +58,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-atacama-coarse.bin",
    "encoding": "float32-le",
@@ -74,7 +74,7 @@
    "body": "earth",
    "name": "Atacama Desert (Yungay area)",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-0",
@@ -87,7 +87,7 @@
     "productId": "Copernicus_DSM_COG_10_S25_00_W071_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -95,11 +95,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -112,10 +112,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 29.5,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -124,7 +124,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-atacama-fine.bin",
    "encoding": "float32-le",
@@ -140,7 +140,7 @@
    "body": "earth",
    "name": "Badwater Basin, Death Valley — below sea level (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -153,7 +153,7 @@
     "productId": "Copernicus_DSM_COG_10_N36_00_W117_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -161,11 +161,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -178,10 +178,10 @@
     "dLon": 0.004166666666666667
    },
    "resolution_m": 416.1,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -193,7 +193,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-death-valley-coarse.bin",
    "encoding": "float32-le",
@@ -209,7 +209,7 @@
    "body": "earth",
    "name": "Badwater Basin, Death Valley — below sea level",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -222,7 +222,7 @@
     "productId": "Copernicus_DSM_COG_10_N36_00_W117_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -230,11 +230,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -247,10 +247,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 27.7,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -259,7 +259,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0.0006239149305555555,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-death-valley-fine.bin",
    "encoding": "float32-le",
@@ -275,7 +275,7 @@
    "body": "earth",
    "name": "Haughton impact structure, Devon Island (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-1",
@@ -288,7 +288,7 @@
     "productId": "Copernicus_DSM_COG_10_N75_00_W090_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -296,11 +296,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -313,10 +313,10 @@
     "dLon": 0.012499999999999999
    },
    "resolution_m": 403.2,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -326,7 +326,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0.09088134765625,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-haughton-coarse.bin",
    "encoding": "float32-le",
@@ -342,7 +342,7 @@
    "body": "earth",
    "name": "Haughton impact structure, Devon Island",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-1",
@@ -355,7 +355,7 @@
     "productId": "Copernicus_DSM_COG_10_N75_00_W090_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -363,11 +363,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -380,10 +380,10 @@
     "dLon": 0.0008333333333333333
    },
    "resolution_m": 26.9,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -392,7 +392,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-haughton-fine.bin",
    "encoding": "float32-le",
@@ -408,7 +408,7 @@
    "body": "earth",
    "name": "Kīlauea caldera, Hawaiʻi (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-3",
@@ -421,7 +421,7 @@
     "productId": "Copernicus_DSM_COG_10_N19_00_W156_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -429,11 +429,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -446,10 +446,10 @@
     "dLon": 0.004166666666666667
    },
    "resolution_m": 450,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -458,7 +458,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0.17303466796875,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-kilauea-coarse.bin",
    "encoding": "float32-le",
@@ -474,7 +474,7 @@
    "body": "earth",
    "name": "Kīlauea caldera, Hawaiʻi",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-3",
@@ -487,7 +487,7 @@
     "productId": "Copernicus_DSM_COG_10_N19_00_W156_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -495,11 +495,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -512,10 +512,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 30,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -524,7 +524,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0.0003255208333333333,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-kilauea-fine.bin",
    "encoding": "float32-le",
@@ -540,7 +540,7 @@
    "body": "earth",
    "name": "Barringer (Meteor) Crater, Arizona — candidate (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -553,7 +553,7 @@
     "productId": "Copernicus_DSM_COG_10_N35_00_W112_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -561,11 +561,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -578,10 +578,10 @@
     "dLon": 0.004166666666666667
    },
    "resolution_m": 419.3,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -591,7 +591,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0.0018310546875,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-meteor-crater-coarse.bin",
    "encoding": "float32-le",
@@ -607,7 +607,7 @@
    "body": "earth",
    "name": "Barringer (Meteor) Crater, Arizona — candidate",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -620,7 +620,7 @@
     "productId": "Copernicus_DSM_COG_10_N35_00_W112_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -628,11 +628,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -645,10 +645,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 28,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -658,7 +658,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-meteor-crater-fine.bin",
    "encoding": "float32-le",
@@ -672,9 +672,9 @@
   {
    "id": "earth-meteor-crater-nasadem-fine",
    "body": "earth",
-   "name": "Barringer (Meteor) Crater — NASADEM (для порівняння джерел)",
+   "name": "Barringer (Meteor) Crater — NASADEM (source comparison)",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; Радарна поверхня SRTM (переоброблена), частково DSM.",
+   "statusNote": "Elevation model from radar interferometry; SRTM radar surface (reprocessed), partly DSM.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -686,20 +686,20 @@
     "url": "https://nasademeuwest.blob.core.windows.net/nasadem-cog/v001/NASADEM_HGT_n35w112.tif",
     "productId": "NASADEM_HGT_n35w112",
     "version": "NASADEM_HGT v001 (NASA JPL, 2020)",
-    "observation": "SRTM, лютий 2000 (переоброблено 2020)",
-    "license": "Дані NASA — без обмежень на використання. Цитування: NASA JPL (2020), NASADEM Merged DEM Global 1 arc second V001, NASA EOSDIS LP DAAC, doi:10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001.",
-    "archive": "Microsoft Planetary Computer (дзеркало LP DAAC)",
+    "observation": "SRTM, February 2000 (reprocessed 2020)",
+    "license": "NASA data — no restrictions on use. Citation: NASA JPL (2020), NASADEM Merged DEM Global 1 arc second V001, NASA EOSDIS LP DAAC, doi:10.5067/MEaSUREs/NASADEM/NASADEM_HGT.001.",
+    "archive": "Microsoft Planetary Computer (LP DAAC mirror)",
     "doc": "https://planetarycomputer.microsoft.com/dataset/nasadem",
     "missingTiles": []
    },
    "datum": {
     "kind": "geoid",
     "model": "EGM96",
-    "description": "Висоти над геоїдом EGM96 (NASADEM_HGT)."
+    "description": "Heights above the EGM96 geoid (NASADEM_HGT)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -712,10 +712,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 28,
-   "verticalAccuracy": "NASADEM (переоброблений SRTM 2000 р.): типово кілька метрів, гірше на крутих схилах і в радарних тінях; заповнені прогалини мають нижчу точність.",
+   "verticalAccuracy": "NASADEM (reprocessed SRTM, Feb 2000): typically a few metres; worse on steep slopes and in radar shadow; void-filled areas are less accurate.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -725,7 +725,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-meteor-crater-nasadem-fine.bin",
    "encoding": "float32-le",
@@ -741,7 +741,7 @@
    "body": "earth",
    "name": "Timanfaya volcanic field, Lanzarote (coarse, ~450 m)",
    "status": "measured",
-   "statusNote": "Блочне усереднення 15×15 рідних пікселів. Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Block average of 15×15 native pixels. Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-10",
@@ -754,7 +754,7 @@
     "productId": "Copernicus_DSM_COG_10_N29_00_W014_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": [
@@ -764,11 +764,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -781,10 +781,10 @@
     "dLon": 0.004166666666666667
    },
    "resolution_m": 433.3,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -793,7 +793,7 @@
     "overviewLevel": 4,
     "maskedFraction": 0.73809814453125,
     "unknownFraction": 0.00018310546875,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-timanfaya-coarse.bin",
    "encoding": "float32-le",
@@ -809,7 +809,7 @@
    "body": "earth",
    "name": "Timanfaya volcanic field, Lanzarote",
    "status": "measured",
-   "statusNote": "Цифрова модель висот з радарної інтерферометрії; DSM — поверхня з будівлями й рослинністю, не «голий ґрунт».",
+   "statusNote": "Elevation model from radar interferometry; DSM — surface including buildings and vegetation, not bare earth.",
    "units": "m",
    "nodata": "NaN",
    "catalogId": "earth-10",
@@ -822,7 +822,7 @@
     "productId": "Copernicus_DSM_COG_10_N29_00_W014_00_DEM",
     "version": "GLO-30 public release (2021/2022 tiles as served on AWS)",
     "observation": "TanDEM-X, 2011–2015",
-    "license": "Copernicus DEM GLO-30, вільна ліцензія Copernicus. Атрибуція: «produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved».",
+    "license": "Copernicus DEM GLO-30, free Copernicus licence. Attribution: \"produced using Copernicus WorldDEM-30 © DLR e.V. 2010-2014 and © Airbus Defence and Space GmbH 2014-2018 provided under COPERNICUS by the European Union and ESA; all rights reserved\".",
     "archive": "AWS Open Data Registry",
     "doc": "https://spacedata.copernicus.eu/collections/copernicus-digital-elevation-model",
     "missingTiles": []
@@ -830,11 +830,11 @@
    "datum": {
     "kind": "geoid",
     "model": "EGM2008",
-    "description": "Ортометричні висоти над геоїдом EGM2008 (за специфікацією Copernicus DEM)."
+    "description": "Orthometric heights above the EGM2008 geoid (per the Copernicus DEM specification)."
    },
    "crs": {
     "body": "Earth",
-    "projection": "Географічна сітка lat/lon (EPSG:4326, еліпсоїд WGS84), PixelIsPoint",
+    "projection": "Geographic lat/lon grid (EPSG:4326, WGS84 ellipsoid), PixelIsPoint",
     "latitude": "geodetic (WGS84)",
     "longitude": "east-positive"
    },
@@ -847,10 +847,10 @@
     "dLon": 0.0002777777777777778
    },
    "resolution_m": 28.9,
-   "verticalAccuracy": "Специфікація Copernicus DEM: абсолютна вертикальна точність < 4 м (LE90) для GLO-30; у горах і лісах гірше.",
+   "verticalAccuracy": "Copernicus DEM specification: absolute vertical accuracy < 4 m (LE90) for GLO-30; worse in mountains and forests.",
    "mask": {
     "status": "derived",
-    "rule": "ESA WorldCover 2021 клас 80 (постійні водойми) у ≥ 50 % підвибірок пікселя → nodata",
+    "rule": "ESA WorldCover 2021 class 80 (permanent water) in ≥ 50 % of a pixel's sub-samples → nodata",
     "source": "ESA WorldCover 10 m 2021 v200",
     "license": "CC BY 4.0 — © ESA WorldCover project 2021 / Contains modified Copernicus Sentinel data (2021) processed by ESA WorldCover consortium",
     "urls": [
@@ -859,7 +859,7 @@
     "overviewLevel": 0,
     "maskedFraction": 0,
     "unknownFraction": 0,
-    "note": "Висоти нижче 0 м НЕ маскуються (западини на кшталт Долини Смерті зберігаються). Де WorldCover відсутній, маска невідома."
+    "note": "Heights below 0 m are NOT masked (depressions such as Death Valley are kept). Where WorldCover is missing, the mask is unknown."
    },
    "file": "earth-timanfaya-fine.bin",
    "encoding": "float32-le",

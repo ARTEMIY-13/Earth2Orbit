@@ -7,13 +7,14 @@
 //               consistently, never to the computations.
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { bi } from "../i18n/bilingual.js";
 
 export function createMissionScene(canvas, callbacks = {}) {
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
   } catch {
-    callbacks.onError?.("WebGL недоступний: 3D вимкнено. 2D-карта, профілі й таблиці працюють.");
+    callbacks.onError?.(bi("WebGL недоступний: 3D вимкнено. 2D-карта, профілі й таблиці працюють.", "WebGL unavailable: 3D is disabled. The 2D map, profiles and tables still work."));
     return null;
   }
   const stage = canvas.parentElement;

@@ -10,18 +10,20 @@ import { terrainCard, landingCard, transferCard } from "../../shared/mission/ass
 import { simulateAscent } from "../../shared/mission/ascent.js";
 import { simulateEDL } from "../../shared/mission/edl.js";
 
+import { bi } from "../i18n/bilingual.js";
+
 const grids = new Map();
 const LIMITS = { maxPixels: 512 * 512, maxDescentSteps: 40000, maxTransferCells: 240 * 240 };
 
 function grid(id) {
   const g = grids.get(id);
-  if (!g) throw new Error("DEM не завантажено у worker: " + id);
+  if (!g) throw new Error(bi("DEM не завантажено у worker: ", "DEM not loaded in the worker: ") + id);
   return g;
 }
 
 const handlers = {
   load({ meta, buffer }) {
-    if (meta.width * meta.height > LIMITS.maxPixels) throw new Error("Область завелика для обробки в браузері");
+    if (meta.width * meta.height > LIMITS.maxPixels) throw new Error(bi("Область завелика для обробки в браузері", "Area too large to process in the browser"));
     const g = makeGrid(meta.width, meta.height, new Float32Array(buffer), meta.georef, meta);
     grids.set(meta.id, g);
     const { slope, aspect } = slopeAspect(g);
@@ -60,7 +62,7 @@ const handlers = {
   transfer(payload, progress) {
     const nDep = payload.windowDays / (payload.depStepDays || 1) + 1;
     const nTof = (payload.tofMaxDays - payload.tofMinDays) / (payload.tofStepDays || 1) + 1;
-    if (nDep * nTof > LIMITS.maxTransferCells) throw new Error("Сітка пошуку завелика — збільш крок або зменш вікно");
+    if (nDep * nTof > LIMITS.maxTransferCells) throw new Error(bi("Сітка пошуку завелика — збільш крок або зменш вікно", "Search grid too large — increase the step or shrink the window"));
     let last = 0;
     const res = planTransfer({
       ...payload,
@@ -94,7 +96,7 @@ const handlers = {
     const t = grid(targetId);
     return candidateIds.map((id) => {
       const c = grids.get(id);
-      if (!c) return { id, error: "не завантажено" };
+      if (!c) return { id, error: "not-loaded" };
       return { id, ...compareTerrain(t, c) };
     });
   },

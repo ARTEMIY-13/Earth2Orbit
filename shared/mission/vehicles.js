@@ -15,6 +15,7 @@ export const VEHICLE_PRESETS = [
     nameEn: "Educational robotic lander",
     real: false,
     note: "Вигаданий навчальний preset. Усі параметри — редаговані припущення.",
+    noteEn: "Fictional educational preset. All parameters are editable assumptions.",
     lander: {
       dryMass: p(1200, "kg"),
       propellant: p(900, "kg"),
@@ -37,6 +38,7 @@ export const VEHICLE_PRESETS = [
     nameEn: "Apollo 11 LM-based descent (NASA masses, thrust, Isp; simplified guidance)",
     real: false,
     note: "Маси (Apollo 11 Mission Report, табл. A-I), максимальна тяга, діапазон дроселювання й Isp (NASA TN D-7143) взято з першоджерел NASA. Пороги посадки, геометрія опор і модель керування — припущення. Це не відтворення реального польоту: реальний LM мав фіксовану точку тяги 92.5 % і зону 10–65 %, тут дроселювання безперервне.",
+    noteEn: "Masses (Apollo 11 Mission Report, Table A-I), maximum thrust, throttle range and Isp (NASA TN D-7143) come from NASA primary sources. Landing limits, leg geometry and guidance are assumptions. This is not a reconstruction of the real flight: the real LM had a fixed throttle point at 92.5 % and a 10–65 % range; here throttling is continuous.",
     lander: {
       dryMass: p(7327, "kg", A11_MR + ": 'Lunar landing' 16 153.2 lb = 7 327 kg (маса після посадки; залишок палива вважається недоступним)"),
       propellant: p(7824, "kg", A11_MR + ": 'Descent orbit insertion — cutoff' 33 401.6 lb = 15 151 kg мінус маса посадки = 7 824 kg (паливо DPS + RCS між DOI і посадкою)"),
@@ -59,6 +61,7 @@ export const VEHICLE_PRESETS = [
     nameEn: "Educational Mars lander (EDL + powered descent)",
     real: false,
     note: "Вигаданий preset. Параметри аерооболонки й парашута — навчальні припущення порядку величин сучасних марсіанських місій, не дані конкретного апарата.",
+    noteEn: "Fictional preset. Aeroshell and parachute parameters are educational assumptions of the order of modern Mars missions, not data of a specific vehicle.",
     lander: {
       dryMass: p(900, "kg"),
       propellant: p(400, "kg"),
@@ -102,6 +105,7 @@ export const VEHICLE_PRESETS = [
     nameEn: "Educational Earth VTVL test vehicle",
     real: false,
     note: "Вигаданий preset для локальних тестових спусків на Землі. Земна гравітація й атмосфера відрізняються від Місяця/Марса.",
+    noteEn: "Fictional preset for local test descents on Earth. Earth gravity and atmosphere differ from the Moon/Mars.",
     lander: {
       dryMass: p(300, "kg"),
       propellant: p(220, "kg"),
@@ -141,7 +145,9 @@ export const LAUNCHER_PRESETS = [
   {
     id: "edu-heavy",
     name: "Навчальний двоступеневий важкий носій (вигаданий)",
+    nameEn: "Educational two-stage heavy launcher (fictional)",
     note: "Вигаданий носій для навчального моделювання; усі параметри — припущення порядку величин важких носіїв. Не дані реальної ракети.",
+    noteEn: "Fictional launcher for educational modelling; all parameters are order-of-magnitude assumptions for heavy launchers. Not data of a real rocket.",
     stages: [
       { dryMass: p(60000, "kg"), propellant: p(1000000, "kg"), thrustVac: p(22000000, "N"), ispVac: p(311, "s"), ispSl: p(282, "s"), cdA: p(12, "m²") },
       { dryMass: p(12000, "kg"), propellant: p(200000, "kg"), thrustVac: p(2000000, "N"), ispVac: p(350, "s"), ispSl: p(350, "s"), cdA: p(12, "m²") },

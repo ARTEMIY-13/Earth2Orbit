@@ -29,7 +29,7 @@ npm run build:pages  # GitHub Pages-збірка (base "/Earth2Orbit/")
 
 | Режим | Команди | Що доступно |
 |---|---|---|
-| Node (Railway тощо) | `npm run build && npm start` | Усе: React-збірка `dist/client`, `/api`, live DEM Землі (`/api/dem/earth`, лише AWS Terrain Tiles), звірка з JPL Horizons (`/api/horizons`, фіксований запит) |
+| Node (Railway тощо) | `npm run build && npm start` | Усе: React-збірка `dist/client`, `/api`, live DEM Землі (`/api/dem/earth`: Copernicus GLO-30 або NASADEM + маска ESA WorldCover; лише ці хости), звірка з JPL Horizons (`/api/horizons`, фіксований запит) |
 | GitHub Pages | `npm run deploy` (`build:pages` → гілка `gh-pages`) | Каталог, карти, клімат NASA POWER, планувальник місії на підготовлених DEM-вирізках і вбудованих ефемеридах. Node-функції вимкнені з поясненням; до `/api` Node-маршрутів запитів немає |
 
 Node-сервер слухає `PORT` (типово 3000). `railway.json` налаштовує збірку, запуск і перевірку
@@ -41,14 +41,19 @@ Node-сервер слухає `PORT` (типово 3000). `railway.json` нал
 - Three.js-візуалізація Землі, Місяця, Марса й Сонця; каталог аналогів із джерелами NASA/ESA,
   фільтри, порівняння, карти, галереї, кліматичні дані NASA POWER, аналіз нових кандидатур, 3D-гід.
 - **Аналіз рельєфу й планувальник місії** ([інструкція](docs/USER_GUIDE.md)):
-  - реальні DEM: LRO LOLA (Місяць, 20 і 30 м/пікс.), MGS MOLA (Марс, 463 м/пікс.), AWS Terrain Tiles
-    (Земля) з повною провенансною інформацією й SHA-256 ([джерела](docs/DATA_SOURCES.md));
+  - реальні DEM: LRO LOLA (Місяць, 20 і 30 м/пікс.), MGS MOLA (Марс, 463 м/пікс.), Copernicus DEM
+    GLO-30 і NASADEM (Земля) з маскою води ESA WorldCover, повною провенансною інформацією й SHA-256
+    ([джерела](docs/DATA_SOURCES.md));
+  - геометрія знімання з метаданих PDS (LROC NAC, HiRISE через ODE): emission/incidence/phase, висота апарата;
   - ухил/експозиція (Горн, у метрах), шорсткість, статистика еліпса, поздовжній/поперечний/довільний
     профілі, горизонталі, шари ризику; експорт профілів у CSV;
   - три незалежні вердикти: «Рельєф», «Посадка апарата», «Переліт»; критичні пропуски ніколи не дають
     позитивного висновку;
   - симуляція моторного спуску (RK4, фіксований крок, пошук контакту з DEM між кроками);
   - датований переліт Земля→Місяць / Земля→Марс (Lambert, patched conics, пошук вікна), UTC + Europe/Kyiv;
+  - симуляції виведення на НОО (двоступенева ракета, розраховані втрати) і EDL Марса (нагрів Sutton–Graves,
+    парашут, стан на старті моторного спуску);
+  - повна локалізація українською та англійською;
   - 3D-перегляд перельоту й посадки на тих самих станах, що й графіки; таймлайн і камери;
   - порівняння з земними аналогами на узгодженому масштабі;
   - експорт і імпорт сценарію JSON із перевіркою відтворюваності.
@@ -59,7 +64,7 @@ Node-сервер слухає `PORT` (типово 3000). `railway.json` нал
 `public/dem/` містить невеликі вирізки (≈1.6 МБ). Їх відтворює скрипт:
 
 ```sh
-npm run fetch:dem                 # NASA PDS (LOLA, MOLA) + AWS Terrain Tiles через HTTP Range
+npm run fetch:dem                 # NASA PDS (LOLA, MOLA) + Copernicus/NASADEM COG + ESA WorldCover через HTTP Range
 npm run fetch:horizons-fixture    # еталонні вектори JPL Horizons для тестів
 ```
 

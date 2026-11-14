@@ -14,10 +14,10 @@ function ramp(stops, f) {
 const SLOPE = [[0, [240, 249, 232]], [0.33, [123, 204, 196]], [0.66, [43, 140, 190]], [1, [8, 64, 129]]];
 
 export const LAYERS = [
-  { id: "elevation", label: "Висоти + відмивка" },
-  { id: "slope", label: "Ухили" },
-  { id: "risk", label: "Ризик ухилу (preset)" },
-  { id: "roughness", label: "Шорсткість" },
+  { id: "elevation", label: "Висоти + відмивка", labelEn: "Elevation + hillshade" },
+  { id: "slope", label: "Ухили", labelEn: "Slope" },
+  { id: "risk", label: "Ризик ухилу (preset)", labelEn: "Slope risk (preset)" },
+  { id: "roughness", label: "Шорсткість", labelEn: "Roughness" },
 ];
 
 export function layerColors(layer, data, layers, maxSlope, w, h) {

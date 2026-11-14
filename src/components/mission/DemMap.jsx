@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { pixelToLatLon } from "../../../shared/terrain/georef.js";
 import { layerColors } from "./layers.js";
+import { useLang } from "../../i18n/LanguageContext.jsx";
 
 /**
  * 2D map of the DEM grid in its native projection (no reprojection).
  * Overlays are given in pixel coordinates.
  */
 export default function DemMap({ meta, data, layers, layer, maxSlope, site, ellipseOutline, approachLine, polyline, track, footprints, contours, hover, mode, onPick, onPolylinePoint, onHoverPixel }) {
+  const { lang } = useLang();
+  const x = (uk, en) => (lang === "en" ? en : uk);
   const canvas = useRef(null);
   const [readout, setReadout] = useState(null);
   const { width: w, height: h } = meta;
@@ -118,19 +121,19 @@ export default function DemMap({ meta, data, layers, layer, maxSlope, site, elli
   }
   const legend =
     layer === "risk"
-      ? [["#3caa6e", `ухил ≤ ${(0.7 * maxSlope).toFixed(1)}°`], ["#eba828", `≤ ${maxSlope}°`], ["#c82832", `> ${maxSlope}° (штрихування)`], ["#464650", "nodata"]]
+      ? [["#3caa6e", x(`ухил ≤ ${(0.7 * maxSlope).toFixed(1)}°`, `slope ≤ ${(0.7 * maxSlope).toFixed(1)}°`)], ["#eba828", `≤ ${maxSlope}°`], ["#c82832", x(`> ${maxSlope}° (штрихування)`, `> ${maxSlope}° (hatched)`)], ["#464650", "nodata"]]
       : layer === "slope"
         ? [["#f0f9e8", "0°"], ["#2b8cbe", "≈26°"], ["#084081", "≥ 40°"], ["#464650", "nodata"]]
         : layer === "roughness"
-          ? [["#f0f9e8", "0 м"], ["#084081", `${(base.rmax || 0).toFixed(1)} м`], ["#464650", "nodata"]]
-          : [["#18264a", `${base.zmin.toFixed(0)} м`], ["#f5f0e1", `${base.zmax.toFixed(0)} м`], ["#464650", "nodata"]];
+          ? [["#f0f9e8", "0 " + x("м", "m")], ["#084081", `${(base.rmax || 0).toFixed(1)} ${x("м", "m")}`], ["#464650", "nodata"]]
+          : [["#18264a", `${base.zmin.toFixed(0)} ${x("м", "m")}`], ["#f5f0e1", `${base.zmax.toFixed(0)} ${x("м", "m")}`], ["#464650", "nodata"]];
   return (
     <div className="m-map">
       <canvas
         ref={canvas}
         tabIndex={0}
         role="application"
-        aria-label={`2D-карта DEM ${meta.name}. Клацни, щоб ${mode === "polyline" ? "додати вершину профілю" : "обрати точку посадки"}. Стрілки зсувають точку.`}
+        aria-label={x(`2D-карта DEM ${meta.name}. Клацни, щоб ${mode === "polyline" ? "додати вершину профілю" : "обрати точку посадки"}. Стрілки зсувають точку.`, `2D DEM map ${meta.name}. Click to ${mode === "polyline" ? "add a profile vertex" : "pick the landing point"}. Arrow keys move the point.`)}
         style={{ aspectRatio: `${w} / ${h}` }}
         onClick={(e) => {
           const p = toPixel(e);
@@ -161,12 +164,12 @@ export default function DemMap({ meta, data, layers, layer, maxSlope, site, elli
             <i style={{ background: c }} /> {l}
           </span>
         ))}
-        {meta.georef.type === "polar-stereographic" && <span className="m-muted">Полярна стереографічна проєкція: «вгору» ≠ північ</span>}
+        {meta.georef.type === "polar-stereographic" && <span className="m-muted">{x("Полярна стереографічна проєкція: «вгору» ≠ північ", "Polar stereographic projection: “up” ≠ north")}</span>}
       </div>
       <div className="m-readout" aria-live="polite">
         {readout
-          ? `${readout.lat.toFixed(4)}°, ${readout.lon.toFixed(4)}° · ${Number.isFinite(readout.z) ? readout.z.toFixed(1) + " м" : "nodata"} · ухил ${Number.isFinite(readout.slope) ? readout.slope.toFixed(1) + "°" : "—"}`
-          : "Наведи курсор на карту"}
+          ? `${readout.lat.toFixed(4)}°, ${readout.lon.toFixed(4)}° · ${Number.isFinite(readout.z) ? readout.z.toFixed(1) + " " + x("м", "m") : "nodata"} · ${x("ухил", "slope")} ${Number.isFinite(readout.slope) ? readout.slope.toFixed(1) + "°" : "—"}`
+          : x("Наведи курсор на карту", "Hover over the map")}
       </div>
     </div>
   );

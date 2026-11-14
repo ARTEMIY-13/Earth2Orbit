@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useLang } from "../../i18n/LanguageContext.jsx";
+const useX = () => {
+  const { lang } = useLang();
+  return (uk, en) => (lang === "en" ? en : uk);
+};
 
 const W = 640;
 const PH = 200;
@@ -22,6 +27,7 @@ function niceTicks(min, max, n = 5) {
  * Gaps are drawn as breaks. The vertical exaggeration of the drawing is shown.
  */
 export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color = "var(--m-accent)" }) {
+  const x = useX();
   const geom = useMemo(() => {
     if (!profile?.points?.length) return null;
     const pts = profile.points;
@@ -59,8 +65,8 @@ export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color
     });
     return { x, y, path, zmin, zmax, L, exaggeration: sy / sx, gaps, xt: niceTicks(0, L), yt: niceTicks(zmin, zmax, 4) };
   }, [profile]);
-  if (!geom) return <p className="m-muted">Профіль ще не побудовано.</p>;
-  if (geom.empty) return <p className="m-muted">Уздовж лінії немає даних DEM.</p>;
+  if (!geom) return <p className="m-muted">{x("Профіль ще не побудовано.", "Profile not built yet.")}</p>;
+  if (geom.empty) return <p className="m-muted">{x("Уздовж лінії немає даних DEM.", "No DEM data along the line.")}</p>;
   const hp = hoverIndex !== null && hoverIndex !== undefined ? profile.points[hoverIndex] : null;
   function move(e) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -74,10 +80,10 @@ export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color
   return (
     <figure className="m-chart">
       <figcaption>
-        <b>{title}</b> · {fmt(profile.length_m)} м · min {fmt(profile.min?.z, 1)} / max {fmt(profile.max?.z, 1)} м · макс. ухил {fmt(profile.maxGrade_deg, 1)}° ·
-        прогалини {profile.gaps} · <span title="Співвідношення вертикального й горизонтального масштабу малюнка; на розрахунки не впливає">верт. перебільшення ×{fmt(geom.exaggeration, 1)}</span>
+        <b>{title}</b> · {fmt(profile.length_m)} {x("м", "m")} · min {fmt(profile.min?.z, 1)} / max {fmt(profile.max?.z, 1)} {x("м", "m")} · {x("макс. ухил", "max grade")} {fmt(profile.maxGrade_deg, 1)}° ·
+        {x("прогалини", "gaps")} {profile.gaps} · <span title={x("Співвідношення вертикального й горизонтального масштабу малюнка; на розрахунки не впливає", "Ratio of the drawing's vertical to horizontal scale; does not affect computations")}>{x("верт. перебільшення", "vertical exaggeration")} ×{fmt(geom.exaggeration, 1)}</span>
       </figcaption>
-      <svg viewBox={`0 0 ${W} ${PH}`} role="img" aria-label={`${title}: висота від ${fmt(profile.min?.z)} до ${fmt(profile.max?.z)} м на ${fmt(profile.length_m)} м`} onMouseMove={move} onMouseLeave={() => onHover?.(null)}>
+      <svg viewBox={`0 0 ${W} ${PH}`} role="img" aria-label={x(`${title}: висота від ${fmt(profile.min?.z)} до ${fmt(profile.max?.z)} м на ${fmt(profile.length_m)} м`, `${title}: elevation ${fmt(profile.min?.z)} to ${fmt(profile.max?.z)} m over ${fmt(profile.length_m)} m`)} onMouseMove={move} onMouseLeave={() => onHover?.(null)}>
         {geom.gaps.map(([a, b], i) => (
           <rect key={i} x={geom.x(a)} y={PPAD.t} width={Math.max(2, geom.x(b) - geom.x(a))} height={PH - PPAD.t - PPAD.b} className="m-gap" />
         ))}
@@ -88,10 +94,10 @@ export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color
           </g>
         ))}
         {geom.xt.map((v) => (
-          <text key={"x" + v} x={geom.x(v)} y={PH - PPAD.b + 16} textAnchor="middle" className="m-tick">{v >= 1000 ? fmt(v / 1000, 1) + " км" : fmt(v) + " м"}</text>
+          <text key={"x" + v} x={geom.x(v)} y={PH - PPAD.b + 16} textAnchor="middle" className="m-tick">{v >= 1000 ? fmt(v / 1000, 1) + " " + x("км", "km") : fmt(v) + " " + x("м", "m")}</text>
         ))}
-        <text x={12} y={PPAD.t - 8} className="m-axis">висота, м ({datum})</text>
-        <text x={W - PPAD.r} y={PH - 4} textAnchor="end" className="m-axis">відстань</text>
+        <text x={12} y={PPAD.t - 8} className="m-axis">{x("висота, м", "elevation, m")} ({datum})</text>
+        <text x={W - PPAD.r} y={PH - 4} textAnchor="end" className="m-axis">{x("відстань", "distance")}</text>
         <path d={geom.path} fill="none" stroke={color} strokeWidth="2" />
         {profile.min && <circle cx={geom.x(profile.min.d)} cy={geom.y(profile.min.z)} r="3.5" className="m-min" />}
         {profile.max && <circle cx={geom.x(profile.max.d)} cy={geom.y(profile.max.z)} r="3.5" className="m-max" />}
@@ -100,7 +106,7 @@ export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color
             <line x1={geom.x(hp.d)} x2={geom.x(hp.d)} y1={PPAD.t} y2={PH - PPAD.b} className="m-cursor" />
             <circle cx={geom.x(hp.d)} cy={geom.y(hp.z)} r="5" className="m-hover" />
             <text x={Math.min(W - 150, geom.x(hp.d) + 8)} y={PPAD.t + 12} className="m-tick">
-              {fmt(hp.d)} м · {fmt(hp.z, 1)} м{hp.grade !== undefined ? ` · ${fmt(hp.grade, 1)}°` : ""}
+              {fmt(hp.d)} {x("м", "m")} · {fmt(hp.z, 1)} {x("м", "m")}{hp.grade !== undefined ? ` · ${fmt(hp.grade, 1)}°` : ""}
             </text>
           </g>
         )}
@@ -111,6 +117,7 @@ export function ProfileChart({ profile, title, datum, onHover, hoverIndex, color
 
 /** Multi-series time chart with a cursor at time t. series: [{key,label,color,unit}] */
 export function SeriesChart({ samples, series, t, title, onSeek }) {
+  const x = useX();
   const geom = useMemo(() => {
     if (!samples?.length) return null;
     const t0 = samples[0].t,
@@ -164,9 +171,9 @@ export function SeriesChart({ samples, series, t, title, onSeek }) {
           <path key={s.key} d={s.d} fill="none" stroke={s.color} strokeWidth="1.8" strokeDasharray={s.dash} />
         ))}
         {Number.isFinite(t) && <line x1={g0.x(t)} x2={g0.x(t)} y1={SPAD.t} y2={SH - SPAD.b} className="m-cursor" />}
-        <text x={SPAD.l} y={SH - 6} className="m-tick">{fmt(g0.t0)} с</text>
-        <text x={W - SPAD.r} y={SH - 6} textAnchor="end" className="m-tick">{fmt(g0.t1)} с</text>
-        <text x={6} y={14} className="m-axis">нормовано окремо для кожної кривої</text>
+        <text x={SPAD.l} y={SH - 6} className="m-tick">{fmt(g0.t0)} {x("с", "s")}</text>
+        <text x={W - SPAD.r} y={SH - 6} textAnchor="end" className="m-tick">{fmt(g0.t1)} {x("с", "s")}</text>
+        <text x={6} y={14} className="m-axis">{x("нормовано окремо для кожної кривої", "each curve normalised separately")}</text>
       </svg>
     </figure>
   );
@@ -174,6 +181,7 @@ export function SeriesChart({ samples, series, t, title, onSeek }) {
 
 /** Departure-date × TOF grid of required stage Δv. */
 export function Porkchop({ transfer, onPick }) {
+  const x = useX();
   const ref = useRef(null);
   const info = useMemo(() => {
     if (!transfer?.grid?.length) return null;
@@ -212,7 +220,7 @@ export function Porkchop({ transfer, onPick }) {
       }
     ctx.putImageData(img, 0, 0);
   }, [transfer, info]);
-  if (!info) return <p className="m-muted">Немає даних сітки.</p>;
+  if (!info) return <p className="m-muted">{x("Немає даних сітки.", "No grid data.")}</p>;
   const b = transfer.best;
   const nD = transfer.grid.length,
     nT = transfer.tofs.length;
@@ -221,14 +229,16 @@ export function Porkchop({ transfer, onPick }) {
   return (
     <figure className="m-chart">
       <figcaption>
-        <b>Вікно старту</b>: потрібна Δv перелітного ступеня за датою відльоту (вісь X) і тривалістю (вісь Y). Світліше = менше.
-        Мін. {fmt(info.min)} м/с; сірим — понад {fmt(info.cap)} м/с або без розв'язку.
+        {x(
+          `Вікно старту: потрібна Δv перелітного ступеня за датою відльоту (вісь X) і тривалістю (вісь Y). Світліше = менше. Мін. ${fmt(info.min)} м/с; сірим — понад ${fmt(info.cap)} м/с або без розв'язку.`,
+          `Launch window: required transfer-stage Δv by departure date (X axis) and time of flight (Y axis). Lighter = less. Min ${fmt(info.min)} m/s; grey — above ${fmt(info.cap)} m/s or no solution.`,
+        )}
       </figcaption>
       <div className="m-pork">
         <canvas
           ref={ref}
           role="img"
-          aria-label={`Сітка ${nD}×${nT}; мінімум ${fmt(info.min)} м/с`}
+          aria-label={x(`Сітка ${nD}×${nT}; мінімум ${fmt(info.min)} м/с`, `Grid ${nD}×${nT}; minimum ${fmt(info.min)} m/s`)}
           onClick={(e) => {
             const r = e.currentTarget.getBoundingClientRect();
             const i = Math.floor(((e.clientX - r.left) / r.width) * nD);
@@ -236,13 +246,13 @@ export function Porkchop({ transfer, onPick }) {
             onPick?.(i, j);
           }}
         />
-        <span className="m-pork-best" style={{ left: `${((bi + 0.5) / nD) * 100}%`, top: `${((nT - 1 - bj + 0.5) / nT) * 100}%` }} title="Оптимум у сітці">
+        <span className="m-pork-best" style={{ left: `${((bi + 0.5) / nD) * 100}%`, top: `${((nT - 1 - bj + 0.5) / nT) * 100}%` }} title={x("Оптимум у сітці", "Grid optimum")}>
           ✕
         </span>
       </div>
       <div className="m-pork-axes">
         <span>{new Date(transfer.launchUtc).toISOString().slice(0, 10)}</span>
-        <span>TOF {fmt(transfer.tofs[0] / 86400, 1)}…{fmt(transfer.tofs[nT - 1] / 86400, 1)} д</span>
+        <span>TOF {fmt(transfer.tofs[0] / 86400, 1)}…{fmt(transfer.tofs[nT - 1] / 86400, 1)} {x("д", "d")}</span>
         <span>{new Date(transfer.launchUtc + (nD - 1) * transfer.depStepMs).toISOString().slice(0, 10)}</span>
       </div>
     </figure>

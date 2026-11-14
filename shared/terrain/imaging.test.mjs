@@ -23,7 +23,7 @@ test("HiRISE: angles present, spacecraft altitude explicitly unavailable (not in
   assert.ok(ps.length >= 1);
   assert.ok(Number.isFinite(ps[0].emission_deg) && Number.isFinite(ps[0].incidence_deg));
   assert.equal(ps[0].spacecraftAltitude_km, null);
-  assert.match(ps[0].spacecraftAltitudeNote, /SPICE/);
+  assert.equal(ps[0].spacecraftAltitudeSource, "not-published-needs-spice");
 });
 
 test("ODE errors are surfaced, polar queries use full longitude range, index records parse", () => {

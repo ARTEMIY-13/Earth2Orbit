@@ -87,7 +87,7 @@ const datasets = [
     { id: `${id}-fine`, body: "earth", name, kind: "earth", source: "copernicus", lat, lon, size: 192, factor: 1, catalogId },
     { id: `${id}-coarse`, body: "earth", name: name + " (coarse, ~450 m)", kind: "earth", source: "copernicus", lat, lon, size: 128, factor: 15, catalogId },
   ]),
-  { id: "earth-meteor-crater-nasadem-fine", body: "earth", name: "Barringer (Meteor) Crater — NASADEM (для порівняння джерел)", kind: "earth", source: "nasadem", lat: 35.027, lon: -111.022, size: 192, factor: 1, catalogId: null },
+  { id: "earth-meteor-crater-nasadem-fine", body: "earth", name: "Barringer (Meteor) Crater — NASADEM (source comparison)", kind: "earth", source: "nasadem", lat: 35.027, lon: -111.022, size: 192, factor: 1, catalogId: null },
 ];
 
 async function fetchRange(url, start, length, attempt = 0) {

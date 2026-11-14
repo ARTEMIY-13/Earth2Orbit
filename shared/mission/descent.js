@@ -134,7 +134,7 @@ export function simulateDescent(opts) {
     g: gOverride,
   } = opts;
   const frame = localFrame(grid, col, row, bodyId);
-  if (!Number.isFinite(frame.z0)) return { ok: false, error: "У цільовому пікселі немає даних DEM (nodata) — спуск не моделюється", outcome: "nodata" };
+  if (!Number.isFinite(frame.z0)) return { ok: false, errorCode: "nodata", error: "nodata at target pixel", outcome: "nodata" };
   const g = gOverride ?? surfaceGravity(bodyId);
   const az = (start.approachAzimuth * Math.PI) / 180; // direction of travel (towards target)
   const ux = Math.sin(az),

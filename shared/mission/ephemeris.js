@@ -38,7 +38,7 @@ function solveKepler(M, e) {
 
 function checkRange(utcMs) {
   if (utcMs < VALID_RANGE_UTC[0] || utcMs > VALID_RANGE_UTC[1])
-    throw new Error("Дата поза межами чинності наближених ефемерид (1800–2050)");
+    throw new Error("ephemeris-range");
 }
 
 /** Heliocentric state of 'emb' or 'mars' at UTC epoch: { r:[m], v:[m/s] }. */

@@ -82,25 +82,26 @@ export function compareTerrain(target, candidate, opts = {}) {
   const minPixels = opts.minPixels ?? 100;
   const enough = mT.validPixels >= minPixels && mC.validPixels >= minPixels && mT.validFraction >= 0.5 && mC.validFraction >= 0.5;
   const rows = [];
-  const add = (id, label, vT, vC, unit, norm, d, method) => {
+  const add = (id, vT, vC, unit, d) => {
     const ok = enough && Number.isFinite(vT) && Number.isFinite(vC) && Number.isFinite(d);
-    rows.push({ id, label, target: Number.isFinite(vT) ? vT : null, candidate: Number.isFinite(vC) ? vC : null, unit, normalisation: norm, difference: ok ? Math.min(1, d) : null, available: ok, method, weight: weights[id] ?? 0 });
+    rows.push({ id, target: Number.isFinite(vT) ? vT : null, candidate: Number.isFinite(vC) ? vC : null, unit, difference: ok ? Math.min(1, d) : null, available: ok, weight: weights[id] ?? 0 });
   };
-  add("slopeHist", "Розподіл ухилів (EMD)", mT.slopeHist.n || NaN, mC.slopeHist.n || NaN, "°", "EMD / 10°", emd(mT.slopeHist.fractions, mC.slopeHist.fractions) / 10, "Earth mover's distance між гістограмами ухилів Horn 3×3");
+  add("slopeHist", mT.slopeHist.n || NaN, mC.slopeHist.n || NaN, "°", emd(mT.slopeHist.fractions, mC.slopeHist.fractions) / 10);
   rows[0].target = mT.slopeHist.fractions;
   rows[0].candidate = mC.slopeHist.fractions;
-  add("slopeP90", "Ухил P90", mT.slopeP90, mC.slopeP90, "°", "|Δ| / 10°", Math.abs(mT.slopeP90 - mC.slopeP90) / 10, "90-й процентиль ухилу");
-  add("roughness", "Шорсткість P50", mT.roughnessP50, mC.roughnessP50, "м", "|log10 відношення| / 1 декада", Math.abs(Math.log10(Math.max(1e-3, mT.roughnessP50) / Math.max(1e-3, mC.roughnessP50))), "RMS залишку від площини, вікно 3×3 на спільному масштабі");
-  add("relief", "Перепад висот P5–P95", mT.relief, mC.relief, "м", "|log10 відношення| / 1 декада", Math.abs(Math.log10(Math.max(0.1, mT.relief) / Math.max(0.1, mC.relief))), "на однаковій площі " + Math.round(side) + " м");
+  add("slopeP90", mT.slopeP90, mC.slopeP90, "°", Math.abs(mT.slopeP90 - mC.slopeP90) / 10);
+  add("roughness", mT.roughnessP50, mC.roughnessP50, "m", Math.abs(Math.log10(Math.max(1e-3, mT.roughnessP50) / Math.max(1e-3, mC.roughnessP50))));
+  add("relief", mT.relief, mC.relief, "m", Math.abs(Math.log10(Math.max(0.1, mT.relief) / Math.max(0.1, mC.relief))));
   const avail = rows.filter((r) => r.available && r.weight > 0);
   const wSum = Object.values(weights).reduce((a, b) => a + b, 0);
   const wAvail = avail.reduce((a, r) => a + r.weight, 0);
   const coverage = wSum ? wAvail / wSum : 0;
   const score = wAvail ? 1 - avail.reduce((a, r) => a + r.weight * r.difference, 0) / wAvail : null;
   const flags = [];
-  if (scaleMismatch > 0.25) flags.push(`Масштаби після узгодження різняться на ${Math.round(scaleMismatch * 100)} %`);
-  if (!enough) flags.push("Замало валідних пікселів на спільному масштабі — порівняння не виконується");
-  if (coverage < 0.6) flags.push("Покриття метрик < 60 % — рейтинг ненадійний");
+  // language-neutral flag codes (texts are produced by the UI)
+  if (scaleMismatch > 0.25) flags.push({ code: "scale-mismatch", value: Math.round(scaleMismatch * 100) });
+  if (!enough) flags.push({ code: "too-few-pixels" });
+  if (coverage < 0.6) flags.push({ code: "low-coverage" });
   return {
     model: ANALOG_MODEL_VERSION,
     commonPixel_m: Math.max(pT, pC),
@@ -113,11 +114,17 @@ export function compareTerrain(target, candidate, opts = {}) {
     flags,
     target: mT,
     candidate: mC,
-    note: "Подібність морфометрії на заданому масштабі — не ймовірність безпечної посадки і не геологічна тотожність.",
   };
 }
 
-export const ANALOG_LIMITS = {
-  moon: ["Гравітація 0.166 g", "Вакуум (немає атмосфери, вітру, парашутів)", "Реголіт без води/органіки, електростатичний пил", "Радіація та різкі теплові цикли", "Полярне освітлення під низьким кутом"],
-  mars: ["Гравітація 0.38 g", "Атмосфера ~6 мбар CO₂ (інша аеродинаміка й EDL)", "Радіаційне середовище", "Хімія ґрунту (перхлорати)", "Температурний режим"],
+export const ANALOG_LIMITS_I18N = {
+  uk: {
+    moon: ["Гравітація 0.166 g", "Вакуум (немає атмосфери, вітру, парашутів)", "Реголіт без води/органіки, електростатичний пил", "Радіація та різкі теплові цикли", "Полярне освітлення під низьким кутом"],
+    mars: ["Гравітація 0.38 g", "Атмосфера ~6 мбар CO₂ (інша аеродинаміка й EDL)", "Радіаційне середовище", "Хімія ґрунту (перхлорати)", "Температурний режим"],
+  },
+  en: {
+    moon: ["Gravity 0.166 g", "Vacuum (no atmosphere, wind or parachutes)", "Regolith without water/organics, electrostatic dust", "Radiation and sharp thermal cycles", "Low-angle polar illumination"],
+    mars: ["Gravity 0.38 g", "~6 mbar CO₂ atmosphere (different aerodynamics and EDL)", "Radiation environment", "Soil chemistry (perchlorates)", "Temperature regime"],
+  },
 };
+export const ANALOG_LIMITS = ANALOG_LIMITS_I18N.uk;

@@ -3,6 +3,7 @@
 import { createHash } from "node:crypto";
 import { buildEarthWindow } from "./data/earthdem.mjs";
 import { utcToJdTDB } from "../shared/mission/time.js";
+import { bi, pick } from "../shared/i18n/bilingual.js";
 
 const HORIZONS = "https://ssd.jpl.nasa.gov/api/horizons.api";
 const HORIZONS_BODIES = { earth: { cmd: "399", center: "500@10" }, mars: { cmd: "499", center: "500@10" }, moon: { cmd: "301", center: "500@399" } };
@@ -36,7 +37,7 @@ export async function handleNodeAPI(request, fetcher = fetch) {
     const scale = url.searchParams.get("scale") === "coarse" ? "coarse" : "fine";
     const source = url.searchParams.get("source") === "nasadem" ? "nasadem" : "copernicus";
     if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 85 || Math.abs(lon) > 180)
-      return json({ error: "Широта має бути в межах ±85°, довгота ±180°." }, 400);
+      return json({ error: bi("Широта має бути в межах ±85°, довгота ±180°.", "Latitude must be within ±85°, longitude ±180°.") }, 400);
     const key = `dem:${source}:${lat.toFixed(4)}:${lon.toFixed(4)}:${scale}`;
     if (cache.has(key)) return json(cache.get(key));
     try {
@@ -59,7 +60,7 @@ export async function handleNodeAPI(request, fetcher = fetch) {
       };
       return json(remember(key, body));
     } catch (error) {
-      return json({ error: "Не вдалося отримати DEM: " + error.message }, 502);
+      return json({ error: bi("Не вдалося отримати DEM: " + pick(error.message, "uk"), "Could not fetch the DEM: " + pick(error.message, "en")) }, 502);
     }
   }
   if (url.pathname === "/api/horizons") {
@@ -68,7 +69,7 @@ export async function handleNodeAPI(request, fetcher = fetch) {
     const spec = HORIZONS_BODIES[body];
     const t = Date.parse(utc || "");
     if (!spec || !Number.isFinite(t) || t < Date.UTC(1900, 0, 1) || t > Date.UTC(2100, 0, 1))
-      return json({ error: "Потрібні body=earth|mars|moon і utc (1900–2100)." }, 400);
+      return json({ error: bi("Потрібні body=earth|mars|moon і utc (1900–2100).", "body=earth|mars|moon and utc (1900–2100) are required.") }, 400);
     const tMin = Math.round(t / 60000) * 60000;
     const iso = new Date(tMin).toISOString().slice(0, 16).replace("T", " ");
     const jdTDB = utcToJdTDB(tMin); // explicit UTC → TDB conversion
@@ -99,7 +100,7 @@ export async function handleNodeAPI(request, fetcher = fetch) {
         }),
       );
     } catch (error) {
-      return json({ error: "Horizons недоступний: " + error.message }, 502);
+      return json({ error: bi("Horizons недоступний: " + error.message, "Horizons unavailable: " + error.message) }, 502);
     }
   }
   return null;

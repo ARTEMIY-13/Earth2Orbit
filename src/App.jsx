@@ -1105,7 +1105,7 @@ export default function App() {
         />
       )}
       {modal?.type === "mission" && (
-        <MissionErrorBoundary onClose={() => setModal(null)}>
+        <MissionErrorBoundary lang={lang} onClose={() => setModal(null)}>
           <Suspense fallback={<div className="toast" role="status">{tr("Завантаження планувальника…")}</div>}>
             <MissionPlanner
               body={modal.body}

@@ -153,13 +153,63 @@ const crit = (o) => ({ critical: true, ...o });
 const r1 = (x, d = 1) => (Number.isFinite(x) ? Math.round(x * 10 ** d) / 10 ** d : null);
 
 /** Criteria rows appended to the transfer card when Mars direct entry is chosen. */
-export function edlCriteria(edl, v) {
+export function edlCriteria(edl, v, lang = "uk") {
+  const x = (uk, en) => (lang === "en" ? en : uk);
   const rows = [];
-  rows.push(crit({ id: "edl-outcome", label: "EDL до старту моторного спуску", value: edl.outcome, unit: "", threshold: "парашут розкрито, досягнуто висоти старту спуску", source: "симуляція EDL", method: edl.model, status: edl.outcome === "powered-descent-start" ? "pass" : "fail", reason: edl.outcome === "powered-descent-start" ? `висота ${r1(edl.end.h, 0)} м, v = ${r1(edl.end.v)} м/с` : "Апарат не загальмував до розкриття парашута / зіткнення" }));
-  rows.push(crit({ id: "edl-heat", label: "Пікова густина теплового потоку (конвективна)", value: r1(edl.peakHeatFlux_Wcm2), unit: "Вт/см²", threshold: `≤ ${v.maxHeatFlux_Wcm2} (preset)`, source: "Sutton–Graves, NASA TR R-376", method: `q = k√(ρ/R_N)v³, k = ${edl.suttonGravesK.toExponential(3)}; радіаційний нагрів не враховано`, status: edl.peakHeatFlux_Wcm2 <= v.maxHeatFlux_Wcm2 ? "pass" : "fail", reason: "Обмеження теплозахисту — припущення навчального preset" }));
-  rows.push({ id: "edl-heatload", critical: false, label: "Інтегральне теплове навантаження", value: r1(edl.heatLoad_Jcm2, 0), unit: "Дж/см²", threshold: "інформаційно", source: "симуляція", method: "∫q dt (гіперзвук)", status: "pass", reason: "Для вибору товщини теплозахисту потрібен аналіз матеріалу — не виконується" });
-  rows.push(crit({ id: "edl-g", label: "Пікове перевантаження", value: r1(edl.peakDecel_g), unit: "g₀", threshold: `≤ ${v.maxDecel_g} (preset)`, source: "симуляція", method: "D/(m·g₀)", status: edl.peakDecel_g <= v.maxDecel_g ? "pass" : "fail", reason: edl.peakDecelAt?.phase === "parachute" ? "Пік на розкритті парашута" : "Пік у гіперзвуковій фазі" }));
+  const sim = x("симуляція EDL", "EDL simulation");
+  rows.push(
+    crit({
+      id: "edl-outcome",
+      label: x("EDL до старту моторного спуску", "EDL to powered-descent start"),
+      value: edl.outcome,
+      unit: "",
+      threshold: x("парашут розкрито, досягнуто висоти старту спуску", "parachute deployed, powered-descent altitude reached"),
+      source: sim,
+      method: edl.model,
+      status: edl.outcome === "powered-descent-start" ? "pass" : "fail",
+      reason: edl.outcome === "powered-descent-start" ? x(`висота ${r1(edl.end.h, 0)} м, v = ${r1(edl.end.v)} м/с`, `altitude ${r1(edl.end.h, 0)} m, v = ${r1(edl.end.v)} m/s`) : x("Апарат не загальмував до розкриття парашута / зіткнення", "The vehicle did not slow down for parachute deployment / impacted"),
+    }),
+  );
+  rows.push(
+    crit({
+      id: "edl-heat",
+      label: x("Пікова густина теплового потоку (конвективна)", "Peak convective heat flux"),
+      value: r1(edl.peakHeatFlux_Wcm2),
+      unit: x("Вт/см²", "W/cm²"),
+      threshold: `≤ ${v.maxHeatFlux_Wcm2} (preset)`,
+      source: "Sutton–Graves, NASA TR R-376",
+      method: x(`q = k√(ρ/R_N)v³, k = ${edl.suttonGravesK.toExponential(3)}; радіаційний нагрів не враховано`, `q = k√(ρ/R_N)v³, k = ${edl.suttonGravesK.toExponential(3)}; radiative heating not included`),
+      status: edl.peakHeatFlux_Wcm2 <= v.maxHeatFlux_Wcm2 ? "pass" : "fail",
+      reason: x("Обмеження теплозахисту — припущення навчального preset", "Heat-shield limit is an educational preset assumption"),
+    }),
+  );
+  rows.push({ id: "edl-heatload", critical: false, label: x("Інтегральне теплове навантаження", "Integrated heat load"), value: r1(edl.heatLoad_Jcm2, 0), unit: x("Дж/см²", "J/cm²"), threshold: x("інформаційно", "informational"), source: x("симуляція", "simulation"), method: x("∫q dt (гіперзвук)", "∫q dt (hypersonic)"), status: "pass", reason: x("Для вибору товщини теплозахисту потрібен аналіз матеріалу — не виконується", "TPS sizing needs a material response analysis — not performed") });
+  rows.push(
+    crit({
+      id: "edl-g",
+      label: x("Пікове перевантаження", "Peak deceleration"),
+      value: r1(edl.peakDecel_g),
+      unit: "g₀",
+      threshold: `≤ ${v.maxDecel_g} (preset)`,
+      source: x("симуляція", "simulation"),
+      method: "D/(m·g₀)",
+      status: edl.peakDecel_g <= v.maxDecel_g ? "pass" : "fail",
+      reason: edl.peakDecelAt?.phase === "parachute" ? x("Пік на розкритті парашута", "Peak at parachute deployment") : x("Пік у гіперзвуковій фазі", "Peak in the hypersonic phase"),
+    }),
+  );
   if (edl.chute)
-    rows.push(crit({ id: "edl-chute", label: "Розкриття парашута (Mach / q / висота)", value: `M ${r1(edl.chute.mach, 2)} · ${r1(edl.chute.dyn, 0)} Па · ${r1(edl.chute.h / 1000, 1)} км`, unit: "", threshold: `M ${v.chuteMachMin}–${v.chuteMachMax}, q ${v.chuteQMin}–${v.chuteQMax} Па, h ≥ ${v.minChuteAltitude / 1000} км`, source: "preset (припущення)", method: "подія при M ≤ M_max", status: edl.chute.inWindow && edl.chute.h >= v.minChuteAltitude ? "pass" : "fail", reason: edl.chute.h < v.minChuteAltitude ? "Замало часу на гальмування під парашутом" : edl.chute.inWindow ? "У вікні розкриття" : "Поза вікном Mach/тиску" }));
+    rows.push(
+      crit({
+        id: "edl-chute",
+        label: x("Розкриття парашута (Mach / q / висота)", "Parachute deployment (Mach / q / altitude)"),
+        value: `M ${r1(edl.chute.mach, 2)} · ${r1(edl.chute.dyn, 0)} ${x("Па", "Pa")} · ${r1(edl.chute.h / 1000, 1)} ${x("км", "km")}`,
+        unit: "",
+        threshold: x(`M ${v.chuteMachMin}–${v.chuteMachMax}, q ${v.chuteQMin}–${v.chuteQMax} Па, h ≥ ${v.minChuteAltitude / 1000} км`, `M ${v.chuteMachMin}–${v.chuteMachMax}, q ${v.chuteQMin}–${v.chuteQMax} Pa, h ≥ ${v.minChuteAltitude / 1000} km`),
+        source: x("preset (припущення)", "preset (assumption)"),
+        method: x("подія при M ≤ M_max", "event at M ≤ M_max"),
+        status: edl.chute.inWindow && edl.chute.h >= v.minChuteAltitude ? "pass" : "fail",
+        reason: edl.chute.h < v.minChuteAltitude ? x("Замало часу на гальмування під парашутом", "Too little time to decelerate under the parachute") : edl.chute.inWindow ? x("У вікні розкриття", "Inside the deployment window") : x("Поза вікном Mach/тиску", "Outside the Mach / pressure window"),
+      }),
+    );
   return rows;
 }

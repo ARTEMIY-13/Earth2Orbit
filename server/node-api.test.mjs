@@ -148,7 +148,7 @@ test("live Earth DEM: Copernicus + WorldCover mask; below-sea-level land is kept
 test("live Earth DEM: missing tile (ocean) and upstream failure become clear errors", async () => {
   const res = await handleNodeAPI(req("/api/dem/earth?lat=10.5&lon=-30.5"), serve({}));
   assert.equal(res.status, 502);
-  assert.match((await res.json()).error, /тайла DEM/);
+  assert.match((await res.json()).error, /тайла DEM.*No DEM tile/);
 });
 
 test("Horizons route: fixed upstream, explicit TDB epoch, input validation", async () => {
