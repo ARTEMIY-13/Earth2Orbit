@@ -10,15 +10,13 @@
     "dev": "vite",
     "dev:server": "node scripts/dev.mjs",
     "start": "node server/index.mjs",
-    "test": "node --test server/api.test.mjs server/node-api.test.mjs shared/terrain/terrain.test.mjs shared/terrain/imaging.test.mjs shared/mission/mission.test.mjs",
+    "test": "node --test server/api.test.mjs",
     "build": "vite build",
     "build:pages": "vite build --mode pages",
-    "lint": "oxlint src server shared scripts && oxlint --max-warnings 0 shared scripts server/data src/components/mission src/workers src/scene/landing.js src/lib/dem.js src/lib/missionWorker.js",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "predeploy": "npm run build:pages",
-    "deploy": "gh-pages -d dist/client",
-    "fetch:dem": "node scripts/fetch-dem.mjs",
-    "fetch:horizons-fixture": "node scripts/fetch-horizons-fixture.mjs"
+    "deploy": "gh-pages -d dist/client"
   },
   "dependencies": {
     "leaflet": "1.9.4",
@@ -30,8 +28,6 @@
   "devDependencies": {
     "@vitejs/plugin-react": "6.0.2",
     "gh-pages": "^6.3.0",
-    "oxlint": "^1.93.0",
-    "playwright": "1.59",
     "vite": "^8.3.8"
   }
 }

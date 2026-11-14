@@ -87,8 +87,7 @@ export default function CandidateForm({
             {tr("Для якого світу?")}
             <select
               value={draft.target}
-              onChange={(event) => { change("target", event.target.value); event.currentTarget.dataset.selectionComplete = "true"; event.currentTarget.blur(); }}
-              onPointerLeave={(event) => { delete event.currentTarget.dataset.selectionComplete; }}
+              onChange={(event) => change("target", event.target.value)}
             >
               <option value="moon">{lang === "en" ? "Moon" : "Місяць"}</option>
               <option value="mars">{lang === "en" ? "Mars" : "Марс"}</option>

@@ -173,47 +173,7 @@ body.cinematic .panel-divider {
   right: 4px;
   transform: none;
 }
-
-
-/* Interactive button highlighting — Earth2Orbit */
-:root { --hover-glow: rgba(140,234,201,.28); --hover-outline: rgba(140,234,201,.72); }
-button:not(:disabled), [role="button"] { transition: background-color .22s ease, color .22s ease, border-color .22s ease, box-shadow .22s ease, transform .22s ease, filter .22s ease; }
-@media (hover: hover) and (pointer: fine) {
-  button:not(:disabled):hover, [role="button"]:hover {
-    border-color: var(--hover-outline);
-    box-shadow: 0 0 0 1px var(--hover-outline), 0 5px 20px var(--hover-glow);
-    filter: brightness(1.16);
-    transform: translateY(-2px);
-  }
-  .planet-nav button:not(:disabled):hover, .planet-nav button.active:hover {
-    background: rgba(140,234,201,.20);
-    color: #eafff7;
-  }
-  .planet-nav button.active:hover { background: var(--accent); color: #091f22; }
-  button:not(:disabled):active { transform: translateY(0) scale(.98); filter: brightness(1.04); }
-}
-button:focus-visible, [role="button"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; box-shadow: 0 0 0 4px var(--hover-glow); }
-@media (prefers-reduced-motion: reduce) {
-  button, [role="button"] { transition: none !important; }
-  button:hover, [role="button"]:hover, button:active { transform: none !important; }
-}
-
-/* Dropdown hover: highlight only while browsing; clear after choosing. */
-select {
-  cursor: pointer;
-  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease;
-}
-@media (hover: hover) and (pointer: fine) {
-  select:not(:disabled):hover:not([data-selection-complete="true"]) {
-    border-color: #8ceac9 !important;
-    box-shadow: 0 0 0 1px rgba(140,234,201,.55), 0 5px 18px rgba(140,234,201,.25);
-    filter: brightness(1.17);
-  }
-}
-/* Keep a visible keyboard focus indication, but not a sticky mouse-click glow. */
-select:focus:not(:focus-visible) { outline: none; }
-select[data-selection-complete="true"]:not(:focus-visible) {
-  box-shadow: none !important;
-  filter: none !important;
-}
-@media (prefers-reduced-motion: reduce) { select { transition: none; } }
+.guide-launch{border-color:#8ceac980;color:var(--accent);font-weight:800;background:#0c2230}.guide-launch:hover{background:#133548}
+.chat-context{display:flex;justify-content:space-between;align-items:center;gap:10px}.chat-context .text-button{padding:0;font-size:10px;white-space:nowrap}
+@media(max-width:760px){.guide-launch{font-size:15px;padding:9px 13px}}
+.message-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.message .chip-action{display:inline-block;padding:7px 11px;border:1px solid #8ceac977;border-radius:18px;background:#10283b;color:var(--accent);font-size:10px;font-weight:700}.message .chip-action:hover{background:#18374b}

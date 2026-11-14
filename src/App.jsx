@@ -1,7 +1,5 @@
 import {
   Fragment,
-  Suspense,
-  lazy,
   useCallback,
   useEffect,
   useMemo,
@@ -26,9 +24,6 @@ import MapModal from "./components/MapModal.jsx";
 import GuideModal from "./components/GuideModal.jsx";
 import LanguageSwitch from "./components/LanguageSwitch.jsx";
 import { useLang } from "./i18n/LanguageContext.jsx";
-import MissionErrorBoundary from "./components/mission/MissionErrorBoundary.jsx";
-// Heavy mission/terrain module is loaded only when opened.
-const MissionPlanner = lazy(() => import("./components/mission/MissionPlanner.jsx"));
 
 const traitName = (id) => criteria.find((item) => item.id === id)?.label || id;
 const targetName = (id, lang = "uk") =>
@@ -171,6 +166,7 @@ export default function App() {
     [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [hover, setHover] = useState(null),
     [modal, setModal] = useState(null),
+    [guideChat, setGuideChat] = useState([]),
     [toast, setToast] = useState("");
   const [draft, setDraft] = useState({
       name: "",
@@ -390,20 +386,21 @@ export default function App() {
       setFullscreenAvailable(false);
     }
   }
-  async function evaluate(event) {
-    event.preventDefault();
+  async function evaluate(event, override) {
+    event?.preventDefault();
     if (candidateBusy) return;
+    const form = override || draft;
     setCandidateBusy(true);
     setCandidateError("");
     setCandidateResult(null);
     candidateRequest.current = new AbortController();
     try {
       const payload = {
-        name: draft.name,
-        lat: Number(draft.lat),
-        lon: Number(draft.lon),
-        target: draft.target,
-        traits: draft.traits,
+        name: form.name,
+        lat: Number(form.lat),
+        lon: Number(form.lon),
+        target: form.target,
+        traits: form.traits,
       };
       const response = await apiFetch("/api/candidates/evaluate", {
         method: "POST",
@@ -447,6 +444,52 @@ export default function App() {
     setTab("candidate");
     setSelection({ world: 0, site: null });
   }, []);
+  // Дії гіда: порівняння та кандидатури. Повертає короткий коментар або нічого.
+  function guideAct(action) {
+    const en = lang === "en";
+    if (action.type === "compare") {
+      if (action.op === "add")
+        setCompareIds((values) => {
+          const next = [...values];
+          for (const id of action.ids || [])
+            if (!next.includes(id) && next.length < 3 && earth.some((item) => item.id === id))
+              next.push(id);
+          return next;
+        });
+      else if (action.op === "remove")
+        setCompareIds((values) => values.filter((id) => !(action.ids || []).includes(id)));
+      else if (action.op === "clear") setCompareIds([]);
+      else if (action.op === "open") {
+        setTab("compare");
+        setModal(null);
+      }
+      return;
+    }
+    if (action.type === "candidate") {
+      const base = { name: "", lat: "", lon: "", target: "mars", traits: [] };
+      if (action.op === "fill") {
+        setDraft({ ...base, ...action.draft });
+        return;
+      }
+      if (action.op === "open") {
+        setTab("candidate");
+        setModal(null);
+        return;
+      }
+      if (action.op === "submit") {
+        const form = action.draft ? { ...base, ...action.draft } : draft;
+        if (!String(form.name).trim() || form.lat === "" || form.lon === "")
+          return en
+            ? "The form is incomplete: it needs a name and coordinates. Tell me, e.g., “Create candidate Death Valley 36.5 -117.1 Mars aridity”."
+            : "Форма неповна: потрібні назва й координати. Напиши, наприклад: «Оформи кандидатуру Долина Смерті 36.5 -117.1 Марс сухість».";
+        setDraft(form);
+        evaluate(null, form);
+        return en
+          ? "Analysis started. The result will appear in the “Candidate” tab."
+          : "Аналіз запущено. Результат з’явиться на вкладці «Кандидат».";
+      }
+    }
+  }
   const detail = site && (
     <Fragment key={`${world.id}:${site.id}`}>
       <div className="detail-top">
@@ -543,12 +586,6 @@ export default function App() {
         <button className="action" onClick={() => setModal({ type: "guide" })}>
           {tr("✧ Запитати гіда ОРІ")}
         </button>
-        <button
-          className="action secondary"
-          onClick={() => setModal({ type: "mission", body: world.id, site: { id: site.id, lat: site.lat, lon: site.lon, name: site.name, body: world.id } })}
-        >
-          {tr("⛰ Аналіз рельєфу й планувальник місії")}
-        </button>
         {world.id === "earth" && (
           <>
             <button
@@ -592,6 +629,14 @@ export default function App() {
         </nav>
         <div className="top-actions">
           <LanguageSwitch />
+          <button
+            className="outline guide-launch"
+            aria-label={lang === "en" ? "Open the ORI guide" : "Відкрити гіда ОРІ"}
+            aria-haspopup="dialog"
+            onClick={() => setModal({ type: "guide" })}
+          >
+            ✧ <span>{lang === "en" ? "ORI Guide" : "Гід ОРІ"}</span>
+          </button>
           <button
             className="outline"
             aria-label={tr("Огляд системи")}
@@ -760,8 +805,7 @@ export default function App() {
                       {tr("Аналог для")}
                       <select
                         value={target}
-                        onChange={(event) => { setTarget(event.target.value); event.currentTarget.dataset.selectionComplete = "true"; event.currentTarget.blur(); }}
-                        onPointerLeave={(event) => { delete event.currentTarget.dataset.selectionComplete; }}
+                        onChange={(event) => setTarget(event.target.value)}
                       >
                         <option value="all">{tr("Місяць і Марс")}</option>
                         <option value="moon">{tr("Місяця")}</option>
@@ -829,12 +873,6 @@ export default function App() {
                     }}
                   >
                     {tr("Знайти земні аналоги →")}
-                  </button>
-                  <button
-                    className="action secondary mission-entry"
-                    onClick={() => setModal({ type: "mission", body: world.id, site: null })}
-                  >
-                    {tr("⛰ Аналіз рельєфу й планувальник місії")}
                   </button>
                 </>
               )}
@@ -1049,8 +1087,7 @@ export default function App() {
           <select
             id="orbitSpeed"
             value={speed}
-            onChange={(event) => { setSpeed(event.target.value); event.currentTarget.dataset.selectionComplete = "true"; event.currentTarget.blur(); }}
-            onPointerLeave={(event) => { delete event.currentTarget.dataset.selectionComplete; }}
+            onChange={(event) => setSpeed(event.target.value)}
           >
             <option value=".25">0.25×</option>
             <option value="1">1×</option>
@@ -1104,23 +1141,14 @@ export default function App() {
           onPick={modal.pick ? chooseCandidatePoint : undefined}
         />
       )}
-      {modal?.type === "mission" && (
-        <MissionErrorBoundary lang={lang} onClose={() => setModal(null)}>
-          <Suspense fallback={<div className="toast" role="status">{tr("Завантаження планувальника…")}</div>}>
-            <MissionPlanner
-              body={modal.body}
-              site={modal.site}
-              earthSites={catalog[0].places}
-              onClose={() => setModal(null)}
-            />
-          </Suspense>
-        </MissionErrorBoundary>
-      )}
-      {modal?.type === "guide" && site && (
+      {modal?.type === "guide" && (
         <GuideModal
-          key={site.id}
           world={world}
           site={site}
+          messages={guideChat}
+          setMessages={setGuideChat}
+          compareIds={compareIds}
+          onAction={guideAct}
           onClose={() => setModal(null)}
         />
       )}
