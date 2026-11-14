@@ -1,5 +1,7 @@
 import {
   Fragment,
+  Suspense,
+  lazy,
   useCallback,
   useEffect,
   useMemo,
@@ -24,6 +26,9 @@ import MapModal from "./components/MapModal.jsx";
 import GuideModal from "./components/GuideModal.jsx";
 import LanguageSwitch from "./components/LanguageSwitch.jsx";
 import { useLang } from "./i18n/LanguageContext.jsx";
+import MissionErrorBoundary from "./components/mission/MissionErrorBoundary.jsx";
+// Heavy mission/terrain module is loaded only when opened.
+const MissionPlanner = lazy(() => import("./components/mission/MissionPlanner.jsx"));
 
 const traitName = (id) => criteria.find((item) => item.id === id)?.label || id;
 const targetName = (id, lang = "uk") =>
@@ -538,6 +543,12 @@ export default function App() {
         <button className="action" onClick={() => setModal({ type: "guide" })}>
           {tr("✧ Запитати гіда ОРІ")}
         </button>
+        <button
+          className="action secondary"
+          onClick={() => setModal({ type: "mission", body: world.id, site: { id: site.id, lat: site.lat, lon: site.lon, name: site.name, body: world.id } })}
+        >
+          {tr("⛰ Аналіз рельєфу й планувальник місії")}
+        </button>
         {world.id === "earth" && (
           <>
             <button
@@ -819,6 +830,12 @@ export default function App() {
                   >
                     {tr("Знайти земні аналоги →")}
                   </button>
+                  <button
+                    className="action secondary mission-entry"
+                    onClick={() => setModal({ type: "mission", body: world.id, site: null })}
+                  >
+                    {tr("⛰ Аналіз рельєфу й планувальник місії")}
+                  </button>
                 </>
               )}
               <div className="analog-list">
@@ -1086,6 +1103,18 @@ export default function App() {
           onSelect={openEarth}
           onPick={modal.pick ? chooseCandidatePoint : undefined}
         />
+      )}
+      {modal?.type === "mission" && (
+        <MissionErrorBoundary lang={lang} onClose={() => setModal(null)}>
+          <Suspense fallback={<div className="toast" role="status">{tr("Завантаження планувальника…")}</div>}>
+            <MissionPlanner
+              body={modal.body}
+              site={modal.site}
+              earthSites={catalog[0].places}
+              onClose={() => setModal(null)}
+            />
+          </Suspense>
+        </MissionErrorBoundary>
       )}
       {modal?.type === "guide" && site && (
         <GuideModal
