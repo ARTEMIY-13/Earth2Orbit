@@ -1,7 +1,7 @@
 // Node-only API routes (never bundled for the browser / GitHub Pages).
 // Only fixed, allow-listed upstreams are contacted; there is no generic proxy.
 import { createHash } from "node:crypto";
-import { buildTerrariumWindow } from "./data/terrarium.mjs";
+import { buildEarthWindow } from "./data/earthdem.mjs";
 import { utcToJdTDB } from "../shared/mission/time.js";
 
 const HORIZONS = "https://ssd.jpl.nasa.gov/api/horizons.api";
@@ -34,21 +34,22 @@ export async function handleNodeAPI(request, fetcher = fetch) {
     const lat = Number(url.searchParams.get("lat")),
       lon = Number(url.searchParams.get("lon"));
     const scale = url.searchParams.get("scale") === "coarse" ? "coarse" : "fine";
-    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 84 || Math.abs(lon) > 180)
-      return json({ error: "Широта має бути в межах ±84°, довгота ±180°." }, 400);
-    const key = `dem:${lat.toFixed(4)}:${lon.toFixed(4)}:${scale}`;
+    const source = url.searchParams.get("source") === "nasadem" ? "nasadem" : "copernicus";
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 85 || Math.abs(lon) > 180)
+      return json({ error: "Широта має бути в межах ±85°, довгота ±180°." }, 400);
+    const key = `dem:${source}:${lat.toFixed(4)}:${lon.toFixed(4)}:${scale}`;
     if (cache.has(key)) return json(cache.get(key));
     try {
       const { data, meta } = await withTimeout(
-        (signal) => buildTerrariumWindow({ lat, lon, size: scale === "coarse" ? 128 : 192, targetSpacing: scale === "coarse" ? 460 : 30, fetcher, signal }),
-        20000,
+        (signal) => buildEarthWindow({ lat, lon, size: scale === "coarse" ? 128 : 192, factor: scale === "coarse" ? 15 : 1, source, fetcher, signal }),
+        45000,
       );
       const buf = Buffer.from(data.buffer);
       const body = {
         meta: {
           ...meta,
-          id: `earth-live-${lat.toFixed(3)}-${lon.toFixed(3)}-${scale}`,
-          name: `Земля ${lat.toFixed(3)}°, ${lon.toFixed(3)}° (${scale === "coarse" ? "грубий" : "детальний"})`,
+          id: `earth-live-${source}-${lat.toFixed(3)}-${lon.toFixed(3)}-${scale}`,
+          name: `Земля ${lat.toFixed(3)}°, ${lon.toFixed(3)}° · ${source === "nasadem" ? "NASADEM" : "Copernicus"} (${scale === "coarse" ? "~450 м" : "~30 м"})`,
           retrieved: new Date().toISOString().slice(0, 10),
           sha256: createHash("sha256").update(buf).digest("hex"),
           encoding: "float32-le-base64",

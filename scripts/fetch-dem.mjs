@@ -10,7 +10,7 @@
 import { writeFile, readFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
-import { buildTerrariumWindow } from "../server/data/terrarium.mjs";
+import { buildEarthWindow } from "../server/data/earthdem.mjs";
 import { latLonToPixel } from "../shared/terrain/georef.js";
 
 const OUT = resolve("public/dem");
@@ -82,10 +82,12 @@ const datasets = [
     ["earth-timanfaya", "Timanfaya volcanic field, Lanzarote", 29.0, -13.75, "earth-10"],
     ["earth-kilauea", "Kīlauea caldera, Hawaiʻi", 19.41, -155.28, "earth-3"],
     ["earth-meteor-crater", "Barringer (Meteor) Crater, Arizona — candidate", 35.027, -111.022, null],
+    ["earth-death-valley", "Badwater Basin, Death Valley — below sea level", 36.23, -116.77, null],
   ].flatMap(([id, name, lat, lon, catalogId]) => [
-    { id: `${id}-fine`, body: "earth", name, kind: "terrarium", lat, lon, size: 192, targetSpacing: 30, catalogId },
-    { id: `${id}-coarse`, body: "earth", name: name + " (coarse, ~460 m)", kind: "terrarium", lat, lon, size: 128, targetSpacing: 460, catalogId },
+    { id: `${id}-fine`, body: "earth", name, kind: "earth", source: "copernicus", lat, lon, size: 192, factor: 1, catalogId },
+    { id: `${id}-coarse`, body: "earth", name: name + " (coarse, ~450 m)", kind: "earth", source: "copernicus", lat, lon, size: 128, factor: 15, catalogId },
   ]),
+  { id: "earth-meteor-crater-nasadem-fine", body: "earth", name: "Barringer (Meteor) Crater — NASADEM (для порівняння джерел)", kind: "earth", source: "nasadem", lat: 35.027, lon: -111.022, size: 192, factor: 1, catalogId: null },
 ];
 
 async function fetchRange(url, start, length, attempt = 0) {
@@ -186,8 +188,8 @@ async function build(ds) {
       verticalAccuracy: ds.verticalAccuracy,
     };
   }
-  if (ds.kind === "terrarium") {
-    const { data, meta } = await buildTerrariumWindow({ lat: ds.lat, lon: ds.lon, size: ds.size, targetSpacing: ds.targetSpacing });
+  if (ds.kind === "earth") {
+    const { data, meta } = await buildEarthWindow({ lat: ds.lat, lon: ds.lon, size: ds.size, factor: ds.factor, source: ds.source });
     return { ...base, ...meta, catalogId: base.catalogId, data };
   }
   throw new Error("unknown kind " + ds.kind);

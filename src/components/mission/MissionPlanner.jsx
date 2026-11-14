@@ -126,6 +126,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   const [cam, setCam] = useState("overview");
   const [liveLat, setLiveLat] = useState(catalogSite?.lat?.toFixed(3) ?? "");
   const [liveLon, setLiveLon] = useState(catalogSite?.lon?.toFixed(3) ?? "");
+  const [liveSource, setLiveSource] = useState("copernicus");
   const [hzCheck, setHzCheck] = useState(null);
   const [importNote, setImportNote] = useState("");
 
@@ -315,8 +316,8 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     const lat = Number(liveLat),
       lon = Number(liveLon);
     try {
-      setBusy({ label: "Отримання DEM із AWS Terrain Tiles…", progress: 0.3 });
-      const d = await loadLiveEarthDem(lat, lon, scale);
+      setBusy({ label: "Отримання DEM (" + (liveSource === "nasadem" ? "NASADEM" : "Copernicus GLO-30") + " + маска ESA WorldCover)…", progress: 0.3 });
+      const d = await loadLiveEarthDem(lat, lon, scale, liveSource);
       setIndex((list) => [...list.filter((x) => x.id !== d.meta.id), { ...d.meta, file: null }]);
       const ly = await client.current.ensureLoaded(d.meta, d.buffer);
       setDem(d);
@@ -663,7 +664,9 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 <p>Верт. точність: {meta.verticalAccuracy}</p>
                 {meta.mask && (
                   <p>
-                    Маска ({meta.mask.status}): {meta.mask.rule}, {(meta.mask.maskedFraction * 100).toFixed(1)} %
+                    Маска води ({meta.mask.status}): {meta.mask.rule}; замасковано {(meta.mask.maskedFraction * 100).toFixed(1)} %
+                    {meta.mask.unknownFraction > 0 && `, маска невідома для ${(meta.mask.unknownFraction * 100).toFixed(1)} %`}
+                    {meta.mask.license && ` · ${meta.mask.license}`}
                   </p>
                 )}
                 <p>
@@ -691,14 +694,22 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   <input aria-label="Широта" value={liveLat} onChange={(e) => setLiveLat(e.target.value)} placeholder="lat" />
                   <input aria-label="Довгота" value={liveLon} onChange={(e) => setLiveLon(e.target.value)} placeholder="lon" />
                 </div>
+                <label>
+                  Джерело
+                  <select value={liveSource} onChange={(e) => setLiveSource(e.target.value)}>
+                    <option value="copernicus">Copernicus DEM GLO-30 (DSM, EGM2008)</option>
+                    <option value="nasadem">NASADEM (SRTM 2000, EGM96; 56°S–60°N)</option>
+                  </select>
+                </label>
                 <div className="m-row">
                   <button className="text-button" disabled={!caps?.demEarthOnDemand || !!busy} onClick={() => loadLive("fine")}>
                     ~30 м
                   </button>
                   <button className="text-button" disabled={!caps?.demEarthOnDemand || !!busy} onClick={() => loadLive("coarse")}>
-                    ~460 м
+                    ~450 м
                   </button>
                 </div>
+                <p className="m-muted">Маска води: ESA WorldCover 2021 (клас 80). Висоти нижче рівня моря не відкидаються.</p>
                 {!caps?.demEarthOnDemand && <p className="m-muted">{caps?.reason || "Потрібен Node-сервер."}</p>}
               </fieldset>
             )}

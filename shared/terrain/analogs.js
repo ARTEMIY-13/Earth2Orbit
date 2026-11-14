@@ -19,6 +19,7 @@ function cropCentre(grid, side_m) {
   if (g.type === "polar-stereographic") georef = { ...g, I0: g.I0 + c0, J0: g.J0 + r0 };
   else if (g.type === "simple-cylindrical") georef = { ...g, lat0: g.lat0 - r0 / g.ppd, lon0: g.lon0 + c0 / g.ppd };
   else if (g.type === "web-mercator") georef = { ...g, px0: g.px0 + c0, py0: g.py0 + r0 };
+  else if (g.type === "geographic") georef = { ...g, lat0: g.lat0 - r0 * g.dLat, lon0: g.lon0 + c0 * g.dLon };
   return makeGrid(n, n, data, georef, grid.meta);
 }
 

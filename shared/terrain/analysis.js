@@ -399,6 +399,8 @@ export function resample(grid, factor, minValid = 0.75) {
     georef = { ...g, ppd: g.ppd / factor, lat0: g.lat0 - off / g.ppd, lon0: g.lon0 + off / g.ppd };
   else if (g.type === "web-mercator")
     georef = { ...g, zoom: g.zoom, tileSize: g.tileSize / factor, px0: (g.px0 + off) / factor, py0: (g.py0 + off) / factor };
+  else if (g.type === "geographic")
+    georef = { ...g, dLat: g.dLat * factor, dLon: g.dLon * factor, lat0: g.lat0 - off * g.dLat, lon0: g.lon0 + off * g.dLon };
   else georef = { ...g, spacing_m: g.spacing_m * factor };
   return makeGrid(w, h, data, georef, { ...grid.meta, resampledFrom: grid.meta?.id, factor });
 }

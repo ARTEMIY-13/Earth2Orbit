@@ -7,6 +7,16 @@
 const D2R = Math.PI / 180;
 const R2D = 180 / Math.PI;
 export const WEB_MERCATOR_RADIUS_M = 6378137;
+// WGS84 ellipsoid (for Earth geographic grids: Copernicus DEM, NASADEM)
+const WGS84_A = 6378137;
+const WGS84_F = 1 / 298.257223563;
+const WGS84_E2 = WGS84_F * (2 - WGS84_F);
+/** Meridional (M) and prime-vertical (N) radii of curvature at latitude (deg). */
+export function wgs84Radii(lat) {
+  const s = Math.sin(lat * D2R);
+  const w = 1 - WGS84_E2 * s * s;
+  return { M: (WGS84_A * (1 - WGS84_E2)) / w ** 1.5, N: WGS84_A / Math.sqrt(w) };
+}
 
 export function wrapLon(lon) {
   let l = ((((lon + 180) % 360) + 360) % 360) - 180;
@@ -48,6 +58,10 @@ export function pixelToLatLon(georef, col, row) {
       const lat = Math.atan(Math.sinh(Math.PI * (1 - (2 * py) / world))) * R2D;
       return { lat, lon: wrapLon(lon) };
     }
+    case "geographic": {
+      const { lat0, lon0, dLat, dLon } = georef; // lat0/lon0 = centre of pixel (0,0)
+      return { lat: lat0 - row * dLat, lon: wrapLon(lon0 + col * dLon) };
+    }
     case "local-metric": {
       // Synthetic test grids: centre lat/lon + equirectangular offset.
       const { lat0 = 0, lon0 = 0, radius_m = 1737400, spacing_m } = georef;
@@ -82,6 +96,10 @@ export function latLonToPixel(georef, lat, lon) {
       const s = Math.sin(lat * D2R);
       const py = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * world;
       return { col: px - px0, row: py - py0 };
+    }
+    case "geographic": {
+      const { lat0, lon0, dLat, dLon } = georef;
+      return { col: wrapLon(lon - lon0) / dLon, row: (lat0 - lat) / dLat };
     }
     case "local-metric": {
       const { lat0 = 0, lon0 = 0, radius_m = 1737400, spacing_m } = georef;
@@ -119,6 +137,11 @@ export function groundSpacing(georef, col, row) {
       const { lat } = pixelToLatLon(georef, col, row);
       const d = ((2 * Math.PI * WEB_MERCATOR_RADIUS_M) / (tileSize * 2 ** zoom)) * Math.cos(lat * D2R);
       return { dx: d, dy: d };
+    }
+    case "geographic": {
+      const lat = georef.lat0 - row * georef.dLat;
+      const { M, N } = wgs84Radii(lat);
+      return { dx: N * Math.cos(lat * D2R) * georef.dLon * D2R, dy: M * georef.dLat * D2R };
     }
     case "local-metric":
       return { dx: georef.spacing_m, dy: georef.spacing_m };

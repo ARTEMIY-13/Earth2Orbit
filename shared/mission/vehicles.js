@@ -4,8 +4,9 @@
 // even then the overall model is a simplified educational one.
 
 const p = (value, unit, source = "assumed") => ({ value, unit, source });
-const NSSDC_LM =
-  "assumed: approximate public historical value; to verify at https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1969-059C (unreachable when this preset was written, 2026-11-14)";
+// Primary sources (NASA NTRS), checked 2026-11-14:
+const A11_MR = "Apollo 11 Mission Report MSC-00171 (1969), Table A-I 'Mass properties', p. A-11 — https://ntrs.nasa.gov/citations/19700008096";
+const TN_D7143 = "NASA TN D-7143, Apollo Experience Report: Descent Propulsion System (1973), 'Descent Engine' design requirements — https://ntrs.nasa.gov/citations/19730011150";
 
 export const VEHICLE_PRESETS = [
   {
@@ -32,17 +33,17 @@ export const VEHICLE_PRESETS = [
   },
   {
     id: "apollo-lm-like",
-    name: "Спуск, подібний до Apollo LM (історичні маса/тяга, спрощено)",
-    nameEn: "Apollo LM-like descent (historical mass/thrust, simplified)",
+    name: "Спуск за даними Apollo 11 LM (маси, тяга, Isp — NASA; керування спрощене)",
+    nameEn: "Apollo 11 LM-based descent (NASA masses, thrust, Isp; simplified guidance)",
     real: false,
-    note: "Маса, тяга й Isp — наближені історичні порядки величин, НЕ перевірені за першоджерелом у цій версії; пороги посадки та модель керування — припущення. Це не відтворення реального апарата.",
+    note: "Маси (Apollo 11 Mission Report, табл. A-I), максимальна тяга, діапазон дроселювання й Isp (NASA TN D-7143) взято з першоджерел NASA. Пороги посадки, геометрія опор і модель керування — припущення. Це не відтворення реального польоту: реальний LM мав фіксовану точку тяги 92.5 % і зону 10–65 %, тут дроселювання безперервне.",
     lander: {
-      dryMass: p(6800, "kg", NSSDC_LM + " (descent dry ≈2 030 kg + ascent stage ≈4 700 kg, rounded)"),
-      propellant: p(8200, "kg", NSSDC_LM + " (descent propellant ≈8 200 kg)"),
-      thrustMax: p(45000, "N", NSSDC_LM + " (descent engine ≈45 kN)"),
-      throttleMin: p(0.1, "fraction of max", "assumed (deep-throttling descent engine)"),
-      isp: p(311, "s", NSSDC_LM),
-      footprintDiameter: p(9.4, "m", "assumed (approx. footpad span)"),
+      dryMass: p(7327, "kg", A11_MR + ": 'Lunar landing' 16 153.2 lb = 7 327 kg (маса після посадки; залишок палива вважається недоступним)"),
+      propellant: p(7824, "kg", A11_MR + ": 'Descent orbit insertion — cutoff' 33 401.6 lb = 15 151 kg мінус маса посадки = 7 824 kg (паливо DPS + RCS між DOI і посадкою)"),
+      thrustMax: p(46706, "N", TN_D7143 + ": maximum-rated thrust 10 500 lbf = 46.7 kN"),
+      throttleMin: p(0.1, "fraction of max", TN_D7143 + ": throttling ratio 10:1"),
+      isp: p(305, "s", TN_D7143 + ": specific impulse (end of duty cycle) 305 lbf·s/lbm"),
+      footprintDiameter: p(9.4, "m", "assumed (approx. footpad span; не перевірено за першоджерелом)"),
       maxSlope: p(12, "deg"),
       maxLegHeightDiff: p(0.6, "m"),
       maxVerticalTouchdown: p(3, "m/s"),

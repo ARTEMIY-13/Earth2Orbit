@@ -60,10 +60,10 @@ export async function loadCapabilities() {
   return capabilities;
 }
 
-/** Node deployment only: live Earth DEM window from AWS Terrain Tiles. */
-export async function loadLiveEarthDem(lat, lon, scale, signal) {
+/** Node deployment only: live Earth DEM window (Copernicus GLO-30 or NASADEM + WorldCover mask). */
+export async function loadLiveEarthDem(lat, lon, scale, source, signal) {
   if (PAGES) throw new Error(STATIC_REASON);
-  const r = await fetch(`/api/dem/earth?lat=${lat}&lon=${lon}&scale=${scale}`, { signal });
+  const r = await fetch(`/api/dem/earth?lat=${lat}&lon=${lon}&scale=${scale}&source=${source}`, { signal });
   const j = await r.json();
   if (!r.ok) throw new Error(j.error || "DEM недоступний");
   const bin = Uint8Array.from(atob(j.data), (c) => c.charCodeAt(0));
