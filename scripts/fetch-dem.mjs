@@ -10,7 +10,7 @@
 import { writeFile, readFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { resolve } from "node:path";
-import { decodePNG, terrariumHeight } from "../server/data/png.mjs";
+import { buildTerrariumWindow } from "../server/data/terrarium.mjs";
 import { latLonToPixel } from "../shared/terrain/georef.js";
 
 const OUT = resolve("public/dem");
@@ -18,14 +18,11 @@ const PDS = "https://pds-geosciences.wustl.edu";
 const LOLA_POLAR = `${PDS}/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img`;
 const LOLA_CYL = `${PDS}/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img`;
 const MOLA = `${PDS}/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg128`;
-const TERRARIUM = "https://s3.amazonaws.com/elevation-tiles-prod/terrarium";
 
 const LOLA_LICENSE =
   "NASA PDS archive data: public domain in the U.S. (NASA data policy); cite Smith et al. / LOLA team.";
 const MOLA_LICENSE =
   "NASA PDS archive data: public domain in the U.S. (NASA data policy); cite Smith et al. 2003 MOLA MEGDR.";
-const TERRARIUM_LICENSE =
-  "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).";
 
 const datasets = [
   {
@@ -190,61 +187,8 @@ async function build(ds) {
     };
   }
   if (ds.kind === "terrarium") {
-    const cosLat = Math.cos((ds.lat * Math.PI) / 180);
-    const zoom = Math.min(14, Math.max(1, Math.round(Math.log2((156543.034 * cosLat) / ds.targetSpacing))));
-    const world = 256 * 2 ** zoom;
-    const s = Math.sin((ds.lat * Math.PI) / 180);
-    const pxC = ((ds.lon + 180) / 360) * world;
-    const pyC = (0.5 - Math.log((1 + s) / (1 - s)) / (4 * Math.PI)) * world;
-    const px0 = Math.round(pxC - ds.size / 2),
-      py0 = Math.round(pyC - ds.size / 2);
-    const data = new Float32Array(ds.size * ds.size);
-    const tiles = new Map();
-    for (let r = 0; r < ds.size; r++)
-      for (let c = 0; c < ds.size; c++) {
-        const key = `${Math.floor((px0 + c) / 256)}/${Math.floor((py0 + r) / 256)}`;
-        tiles.set(key, null);
-      }
-    const urls = [];
-    await pool([...tiles.keys()], 4, async (key) => {
-      const [tx, ty] = key.split("/");
-      const url = `${TERRARIUM}/${zoom}/${tx}/${ty}.png`;
-      urls.push(url);
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(url + " " + res.status);
-      tiles.set(key, decodePNG(new Uint8Array(await res.arrayBuffer())));
-    });
-    for (let r = 0; r < ds.size; r++)
-      for (let c = 0; c < ds.size; c++) {
-        const gx = px0 + c,
-          gy = py0 + r;
-        const t = tiles.get(`${Math.floor(gx / 256)}/${Math.floor(gy / 256)}`);
-        const o = ((gy % 256) * 256 + (gx % 256)) * 4;
-        data[r * ds.size + c] = terrariumHeight(t.rgba[o], t.rgba[o + 1], t.rgba[o + 2]);
-      }
-    // Terrarium blends ocean bathymetry; there is no land/water mask in the tiles.
-    // ASSUMPTION (flagged in metadata): heights < 0 m are treated as sea → NaN.
-    let masked = 0;
-    for (let i = 0; i < data.length; i++)
-      if (data[i] < 0) {
-        data[i] = NaN;
-        masked++;
-      }
-    const pixel = ((2 * Math.PI * 6378137) / world) * cosLat;
-    return {
-      ...base,
-      data,
-      width: ds.size,
-      height: ds.size,
-      source: { title: "AWS Terrain Tiles (Terrarium PNG encoding)", url: `${TERRARIUM}/${zoom}/{x}/{y}.png`, tiles: urls.sort(), productId: `terrarium z${zoom}`, version: "elevation-tiles-prod (static, last modified 2017)", observation: "Composite of source DEMs; dominant source for this area is not encoded per pixel", license: TERRARIUM_LICENSE, archive: "AWS Open Data Registry" },
-      datum: { kind: "geoid", description: "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)." },
-      crs: { body: "Earth", projection: "Web Mercator (EPSG:3857, spherical 6378137 m)", latitude: "geodetic (WGS84)", longitude: "east-positive" },
-      georef: { type: "web-mercator", zoom, tileSize: 256, px0, py0 },
-      resolution_m: Math.round(pixel * 10) / 10,
-      sourceResolutionNote: "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
-      verticalAccuracy: "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
-      mask: { status: "assumed", rule: "h < 0 m → nodata (possible sea/bathymetry)", maskedFraction: masked / data.length, note: "Not valid for genuinely below-sea-level land (e.g. Death Valley)." },
-    };
+    const { data, meta } = await buildTerrariumWindow({ lat: ds.lat, lon: ds.lon, size: ds.size, targetSpacing: ds.targetSpacing });
+    return { ...base, ...meta, catalogId: base.catalogId, data };
   }
   throw new Error("unknown kind " + ds.kind);
 }

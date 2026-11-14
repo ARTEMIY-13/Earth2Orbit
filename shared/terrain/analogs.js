@@ -85,7 +85,7 @@ export function compareTerrain(target, candidate, opts = {}) {
     const ok = enough && Number.isFinite(vT) && Number.isFinite(vC) && Number.isFinite(d);
     rows.push({ id, label, target: Number.isFinite(vT) ? vT : null, candidate: Number.isFinite(vC) ? vC : null, unit, normalisation: norm, difference: ok ? Math.min(1, d) : null, available: ok, method, weight: weights[id] ?? 0 });
   };
-  add("slopeHist", "Розподіл ухилів (EMD)", null, null, "°", "EMD / 10°", emd(mT.slopeHist.fractions, mC.slopeHist.fractions) / 10, "Earth mover's distance між гістограмами ухилів Horn 3×3");
+  add("slopeHist", "Розподіл ухилів (EMD)", mT.slopeHist.n || NaN, mC.slopeHist.n || NaN, "°", "EMD / 10°", emd(mT.slopeHist.fractions, mC.slopeHist.fractions) / 10, "Earth mover's distance між гістограмами ухилів Horn 3×3");
   rows[0].target = mT.slopeHist.fractions;
   rows[0].candidate = mC.slopeHist.fractions;
   add("slopeP90", "Ухил P90", mT.slopeP90, mC.slopeP90, "°", "|Δ| / 10°", Math.abs(mT.slopeP90 - mC.slopeP90) / 10, "90-й процентиль ухилу");

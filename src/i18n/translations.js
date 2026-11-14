@@ -463,5 +463,13 @@ export const translations = {
     'Окремі геологічні й операційні умови подібні. Точні властивості конкретного майданчика потребують польових даних.': 'Some geological and operational conditions are similar. The properties of a specific site require field data.',
     'Сухі долини Антарктики': 'Antarctic Dry Valleys',
     'Наша планета': 'Our planet',
+    '⛰ Аналіз рельєфу й планувальник місії': '⛰ Terrain analysis & mission planner',
+    'Завантаження планувальника…': 'Loading planner…',
+    'Планувальник місії': 'Mission planner',
+    'Розрахувати': 'Compute',
+    'Скасувати': 'Cancel',
+    'Імпорт': 'Import',
+    'АНАЛІЗ РЕЛЬЄФУ · ПОСАДКА · ПЕРЕЛІТ': 'TERRAIN · LANDING · TRANSFER',
+    'Навчальна модель незалежного проєкту для NASA Space Apps 2026. Не сертифікована система керування польотами.': 'Educational model from an independent NASA Space Apps 2026 project. Not a certified flight-control system.',
   }
 };

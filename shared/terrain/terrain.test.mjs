@@ -138,6 +138,8 @@ test("analog comparison: identical grids score 1; scale is matched first", () =>
   const a = synthetic(64, 10, (x, y) => 20 * Math.sin(x / 80) + 10 * Math.cos(y / 60));
   const same = compareTerrain(a, a);
   near(same.score, 1, 1e-9);
+  near(same.coverage, 1, 1e-9, "all four metrics available");
+  assert.ok(same.rows.every((r) => r.available));
   const coarse = resample(a, 4);
   const cmp = compareTerrain(a, coarse);
   near(cmp.commonPixel_m, 40, 1e-6, "compared at the coarser common scale");

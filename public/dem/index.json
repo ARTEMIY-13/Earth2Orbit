@@ -432,7 +432,7 @@
    "body": "earth",
    "name": "Barringer (Meteor) Crater, Arizona — candidate",
    "status": "measured",
-   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "statusNote": "Gridded elevation product derived from measurements (composite of source DEMs).",
    "units": "m",
    "nodata": "NaN",
    "catalogId": null,
@@ -456,7 +456,7 @@
    },
    "datum": {
     "kind": "geoid",
-    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source."
    },
    "crs": {
     "body": "Earth",
@@ -472,7 +472,7 @@
     "py0": 415147
    },
    "resolution_m": 31.3,
-   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — resampling does not add detail.",
    "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
    "mask": {
     "status": "assumed",

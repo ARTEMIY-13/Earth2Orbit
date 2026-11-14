@@ -79,6 +79,17 @@ export async function handleAPI(request, env = {}, fetcher = fetch) {
       framework: "React",
       catalogVersion: "2026-11-11",
     });
+  if (request.method === "GET" && path === "/api/capabilities") {
+    const node = String(env.RUNTIME || "").startsWith("node");
+    return json({
+      runtime: env.RUNTIME || "unknown",
+      demEarthOnDemand: node,
+      horizons: node,
+      reason: node ? null : "Статичний хостинг (GitHub Pages) не має сервера: доступні лише підготовлені DEM-вирізки та вбудовані наближені ефемериди.",
+    });
+  }
+  if (request.method === "GET" && ["/api/dem/earth", "/api/horizons"].includes(path))
+    return json({ error: "Ця функція потребує Node-сервера і недоступна в статичній версії.", unavailable: "static" }, 501);
   if (request.method === "GET" && path === "/api/status")
     return json({
       configured: Boolean(env.OPENAI_API_KEY || env.LOCAL_GUIDE),

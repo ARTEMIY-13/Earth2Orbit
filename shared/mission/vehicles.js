@@ -75,7 +75,37 @@ export const VEHICLE_PRESETS = [
       dragArea: p(4, "m²·Cd"),
     },
   },
+  {
+    id: "edu-earth-vtvl",
+    name: "Навчальний земний VTVL-стенд (тест-посадка на аналогу)",
+    nameEn: "Educational Earth VTVL test vehicle",
+    real: false,
+    note: "Вигаданий preset для локальних тестових спусків на Землі. Земна гравітація й атмосфера відрізняються від Місяця/Марса.",
+    lander: {
+      dryMass: p(300, "kg"),
+      propellant: p(220, "kg"),
+      thrustMax: p(9000, "N"),
+      throttleMin: p(0.25, "fraction of max"),
+      isp: p(230, "s"),
+      footprintDiameter: p(2.5, "m"),
+      maxSlope: p(10, "deg"),
+      maxLegHeightDiff: p(0.25, "m"),
+      maxVerticalTouchdown: p(2, "m/s"),
+      maxHorizontalTouchdown: p(0.8, "m/s"),
+      maxTilt: p(12, "deg"),
+      reserveFraction: p(0.05, "fraction of propellant"),
+      maxThrustTilt: p(30, "deg from vertical"),
+      dragArea: p(1.2, "m²·Cd"),
+    },
+  },
 ];
+
+export const DEFAULT_PRESET_BY_BODY = { moon: "edu-robotic", mars: "edu-mars", earth: "edu-earth-vtvl" };
+export const DEFAULT_START_BY_BODY = {
+  moon: { altitude: 1500, downrange: 2000, horizontalSpeed: 40, verticalSpeed: -15, dt: 0.05 },
+  mars: { altitude: 1500, downrange: 900, horizontalSpeed: 30, verticalSpeed: -55, dt: 0.05 },
+  earth: { altitude: 300, downrange: 250, horizontalSpeed: 10, verticalSpeed: -5, dt: 0.05 },
+};
 
 export const STACK_DEFAULTS = {
   transferDryMass: p(4000, "kg"),
