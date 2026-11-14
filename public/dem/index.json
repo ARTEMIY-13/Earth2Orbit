@@ -1,0 +1,772 @@
+{
+ "schemaVersion": 1,
+ "generatedBy": "scripts/fetch-dem.mjs",
+ "datasets": [
+  {
+   "id": "earth-atacama-coarse",
+   "body": "earth",
+   "name": "Atacama Desert (Yungay area) (coarse, ~460 m)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-0",
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/77/145.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/78/145.png"
+    ],
+    "productId": "terrarium z8",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 8,
+    "tileSize": 256,
+    "px0": 19959,
+    "py0": 37223
+   },
+   "resolution_m": 558.3,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-atacama-coarse.bin",
+   "encoding": "float32-le",
+   "sha256": "0448f5d354f1a6fc9988438f7b086eb8960446c3dfb0ea41cd755ad6c23b557c",
+   "stats": {
+    "min": 392,
+    "max": 2787,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-atacama-fine",
+   "body": "earth",
+   "name": "Atacama Desert (Yungay area)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-0",
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/1251/2330.png"
+    ],
+    "productId": "terrarium z12",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 12,
+    "tileSize": 256,
+    "px0": 320273,
+    "py0": 596491
+   },
+   "resolution_m": 34.9,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-atacama-fine.bin",
+   "encoding": "float32-le",
+   "sha256": "2af02210043a68c09c3d383b42f1e36e3943e2a50251ae8d43d8f4c1d6fc269b",
+   "stats": {
+    "min": 978,
+    "max": 1447,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-haughton-coarse",
+   "body": "earth",
+   "name": "Haughton impact structure, Devon Island (coarse, ~460 m)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-1",
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/15/10.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/15/11.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/16/10.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/6/16/11.png"
+    ],
+    "productId": "terrarium z6",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 6,
+    "tileSize": 256,
+    "px0": 4047,
+    "py0": 2773
+   },
+   "resolution_m": 617.4,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0.08465576171875,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-haughton-coarse.bin",
+   "encoding": "float32-le",
+   "sha256": "ea5dd1aed6ee143697373113e6feef76d16aa36d0cf9fc54c3f8860cfc9cba9c",
+   "stats": {
+    "min": 0,
+    "max": 453,
+    "validFraction": 0.91534423828125
+   }
+  },
+  {
+   "id": "earth-haughton-fine",
+   "body": "earth",
+   "name": "Haughton impact structure, Devon Island",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-1",
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/256/176.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/256/177.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/257/176.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/10/257/177.png"
+    ],
+    "productId": "terrarium z10",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 10,
+    "tileSize": 256,
+    "px0": 65680,
+    "py0": 45299
+   },
+   "resolution_m": 38.6,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-haughton-fine.bin",
+   "encoding": "float32-le",
+   "sha256": "a72d8375678464444f79d86072d309e0e1ef7cd77c2beabfe012ff9c21911833",
+   "stats": {
+    "min": 88.28125,
+    "max": 214.68359375,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-kilauea-coarse",
+   "body": "earth",
+   "name": "Kīlauea caldera, Hawaiʻi (coarse, ~460 m)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-3",
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/17/113.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/17/114.png"
+    ],
+    "productId": "terrarium z8",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 8,
+    "tileSize": 256,
+    "px0": 4436,
+    "py0": 29101
+   },
+   "resolution_m": 576.7,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0.23583984375,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-kilauea-coarse.bin",
+   "encoding": "float32-le",
+   "sha256": "17424caa9cfab41a639cf73f5ee2fb8c304444c49ef0106c5c82e5f47f9f09a7",
+   "stats": {
+    "min": 0,
+    "max": 4162,
+    "validFraction": 0.76416015625
+   }
+  },
+  {
+   "id": "earth-kilauea-fine",
+   "body": "earth",
+   "name": "Kīlauea caldera, Hawaiʻi",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-3",
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/280/1822.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/280/1823.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/281/1822.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/281/1823.png"
+    ],
+    "productId": "terrarium z12",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 12,
+    "tileSize": 256,
+    "px0": 71906,
+    "py0": 466543
+   },
+   "resolution_m": 36,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-kilauea-fine.bin",
+   "encoding": "float32-le",
+   "sha256": "e4bd428e0e90eee96e213e105323cf49218cc819f00eb2689c44c36d094a0547",
+   "stats": {
+    "min": 967.12890625,
+    "max": 1260.13671875,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-meteor-crater-coarse",
+   "body": "earth",
+   "name": "Barringer (Meteor) Crater, Arizona — candidate (coarse, ~460 m)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": null,
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/48/101.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/49/101.png"
+    ],
+    "productId": "terrarium z8",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 8,
+    "tileSize": 256,
+    "px0": 12493,
+    "py0": 25889
+   },
+   "resolution_m": 500.7,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-meteor-crater-coarse.bin",
+   "encoding": "float32-le",
+   "sha256": "ac26b4011d34970094b3517022fb68089cccee7c28d1aac4af03a2329e6e5571",
+   "stats": {
+    "min": 708,
+    "max": 2412,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-meteor-crater-fine",
+   "body": "earth",
+   "name": "Barringer (Meteor) Crater, Arizona — candidate",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": null,
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/784/1621.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/784/1622.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1621.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/785/1622.png"
+    ],
+    "productId": "terrarium z12",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 12,
+    "tileSize": 256,
+    "px0": 200817,
+    "py0": 415147
+   },
+   "resolution_m": 31.3,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-meteor-crater-fine.bin",
+   "encoding": "float32-le",
+   "sha256": "e23e21c5af5b3ead343edbf7d30e41679cfbf3e5466c42f55cbd3026af34a6ea",
+   "stats": {
+    "min": 1562.67578125,
+    "max": 1746.40625,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "earth-timanfaya-coarse",
+   "body": "earth",
+   "name": "Timanfaya volcanic field, Lanzarote (coarse, ~460 m)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-10",
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/117/106.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/8/118/106.png"
+    ],
+    "productId": "terrarium z8",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 8,
+    "tileSize": 256,
+    "px0": 30201,
+    "py0": 27184
+   },
+   "resolution_m": 534.8,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0.75775146484375,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-timanfaya-coarse.bin",
+   "encoding": "float32-le",
+   "sha256": "b7fbe0b151efb0b7a1620221c12f1726c891cb197e6a664b334f98103cd13eec",
+   "stats": {
+    "min": 0,
+    "max": 648,
+    "validFraction": 0.24224853515625
+   }
+  },
+  {
+   "id": "earth-timanfaya-fine",
+   "body": "earth",
+   "name": "Timanfaya volcanic field, Lanzarote",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": "earth-10",
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "AWS Terrain Tiles (Terrarium PNG encoding)",
+    "url": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/{x}/{y}.png",
+    "tiles": [
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/1891/1702.png",
+     "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/12/1891/1703.png"
+    ],
+    "productId": "terrarium z12",
+    "version": "elevation-tiles-prod (static, last modified 2017)",
+    "observation": "Composite of source DEMs; dominant source for this area is not encoded per pixel",
+    "license": "AWS Open Data 'Terrain Tiles' (Tilezen/Mapzen Joerd). Attribution required per source list: https://github.com/tilezen/joerd/blob/master/docs/attribution.md (SRTM/NASA, ArcticDEM, GMTED, ETOPO1, 3DEP …).",
+    "archive": "AWS Open Data Registry"
+   },
+   "datum": {
+    "kind": "geoid",
+    "description": "Orthometric heights, mostly EGM96 geoid (SRTM); varies by contributing source (see attribution list)."
+   },
+   "crs": {
+    "body": "Earth",
+    "projection": "Web Mercator (EPSG:3857, spherical 6378137 m)",
+    "latitude": "geodetic (WGS84)",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "web-mercator",
+    "zoom": 12,
+    "tileSize": 256,
+    "px0": 484142,
+    "py0": 435867
+   },
+   "resolution_m": 33.4,
+   "sourceResolutionNote": "Tile pixel spacing; underlying source (e.g. SRTM 1″ ≈ 30 m, GMTED ≈ 250 m+) may be coarser — tile resampling does not add detail.",
+   "verticalAccuracy": "SRTM: ~16 m absolute (90 %) by specification, typically 5–10 m; other sources differ.",
+   "mask": {
+    "status": "assumed",
+    "rule": "h < 0 m → nodata (possible sea/bathymetry)",
+    "maskedFraction": 0,
+    "note": "Not valid for genuinely below-sea-level land (e.g. Death Valley)."
+   },
+   "file": "earth-timanfaya-fine.bin",
+   "encoding": "float32-le",
+   "sha256": "2b0f0077010bd831350313761209e8be29af97ea893fe2be1b7c6b47d7cde4e8",
+   "stats": {
+    "min": 119.7421875,
+    "max": 495.015625,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "mars-jezero-mola-463m",
+   "body": "mars",
+   "name": "Jezero crater (MOLA MEGDR 128 px/deg)",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": null,
+   "retrieved": "2026-11-14",
+   "width": 128,
+   "height": 128,
+   "source": {
+    "title": "MGS MOLA Mission Experiment Gridded Data Record (topography)",
+    "url": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg128/megt44n000hb.img",
+    "label": "https://pds-geosciences.wustl.edu/mgs/mgs-m-mola-5-megdr-l3-v1/mgsl_300x/meg128/megt44n000hb.lbl",
+    "productId": "MEGT44N000HB",
+    "version": "2.0 (product created 2003-03-21)",
+    "dataset": "MGS-M-MOLA-5-MEGDR-L3-V1.0",
+    "observation": "MGS MOLA 1997–2001",
+    "license": "NASA PDS archive data: public domain in the U.S. (NASA data policy); cite Smith et al. 2003 MOLA MEGDR.",
+    "archive": "NASA PDS Geosciences Node"
+   },
+   "datum": {
+    "kind": "areoid",
+    "radius_m": 3396000,
+    "description": "MOLA topography = planetary radius − areoid (equipotential, mean equatorial radius 3396 km)."
+   },
+   "crs": {
+    "body": "Mars",
+    "projection": "Simple cylindrical (equirectangular)",
+    "latitude": "planetocentric",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "simple-cylindrical",
+    "radius_m": 3396000,
+    "ppd": 128,
+    "lat0": 18.94140625,
+    "lon0": 76.94921875
+   },
+   "resolution_m": 463.1,
+   "verticalAccuracy": "MOLA ~1 m vertical vs. centre of mass (Smith et al. 2001), but 463 m grid with interpolation between tracks: landing-scale hazards (metres) are completely unresolved.",
+   "file": "mars-jezero-mola-463m.bin",
+   "encoding": "float32-le",
+   "sha256": "9c13282503f87838875689f9d1b9389ea16aaecdd46d076138cb14f83ab96408",
+   "stats": {
+    "min": -2808,
+    "max": -1402,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "moon-apollo11-lola-30m",
+   "body": "moon",
+   "name": "Mare Tranquillitatis — Apollo 11 site",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": null,
+   "retrieved": "2026-11-14",
+   "width": 192,
+   "height": 192,
+   "source": {
+    "title": "LRO LOLA Gridded Data Record (cylindrical 1024 px/deg)",
+    "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_00n_15n_000_030.img",
+    "label": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/cylindrical/img/ldem_1024_00n_15n_000_030.lbl",
+    "productId": "LDEM_1024_00N_15N_000_030",
+    "version": "V1.05 (product created 2011-03-15)",
+    "dataset": "LRO-L-LOLA-4-GDR-V1.0",
+    "observation": "LOLA altimetry through 2011",
+    "license": "NASA PDS archive data: public domain in the U.S. (NASA data policy); cite Smith et al. / LOLA team.",
+    "archive": "NASA PDS Geosciences Node"
+   },
+   "datum": {
+    "kind": "sphere",
+    "radius_m": 1737400,
+    "description": "Height above 1737.4 km reference sphere."
+   },
+   "crs": {
+    "body": "Moon",
+    "projection": "Simple cylindrical (equirectangular)",
+    "latitude": "planetocentric",
+    "longitude": "east-positive"
+   },
+   "georef": {
+    "type": "simple-cylindrical",
+    "radius_m": 1737400,
+    "ppd": 1024,
+    "lat0": 0.76806640625,
+    "lon0": 23.37939453125
+   },
+   "resolution_m": 29.6,
+   "verticalAccuracy": "LOLA ~1 m radial; at 1024 px/deg near the equator ground tracks are km apart, so many pixels are interpolated. Small craters/boulders are NOT resolved.",
+   "file": "moon-apollo11-lola-30m.bin",
+   "encoding": "float32-le",
+   "sha256": "ed272aeecc516e268c1f4b7274ed77f36c3c5b65719b3d6310177bd9d1821c35",
+   "stats": {
+    "min": -2003.5,
+    "max": -1857.5,
+    "validFraction": 1
+   }
+  },
+  {
+   "id": "moon-south-pole-lola-20m",
+   "body": "moon",
+   "name": "Shackleton rim / lunar south pole",
+   "status": "measured",
+   "statusNote": "Gridded elevation product derived from measurements (interpolated between tracks/samples).",
+   "units": "m",
+   "nodata": "NaN",
+   "catalogId": null,
+   "retrieved": "2026-11-14",
+   "width": 256,
+   "height": 256,
+   "source": {
+    "title": "LRO LOLA Gridded Data Record (polar)",
+    "url": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_875s_20m.img",
+    "label": "https://pds-geosciences.wustl.edu/lro/lro-l-lola-3-rdr-v1/lrolol_1xxx/data/lola_gdr/polar/img/ldem_875s_20m.lbl",
+    "productId": "LDEM_875S_20M",
+    "version": "V2.0 (product created 2017-06-15)",
+    "dataset": "LRO-L-LOLA-4-GDR-V1.0",
+    "observation": "2009-07-13 → 2017-02-02 (LOLA altimetry)",
+    "license": "NASA PDS archive data: public domain in the U.S. (NASA data policy); cite Smith et al. / LOLA team.",
+    "archive": "NASA PDS Geosciences Node"
+   },
+   "datum": {
+    "kind": "sphere",
+    "radius_m": 1737400,
+    "description": "Height above 1737.4 km reference sphere (not a geoid/'sea level')."
+   },
+   "crs": {
+    "body": "Moon",
+    "projection": "Polar stereographic (spherical), true at pole",
+    "latitude": "planetocentric",
+    "longitude": "east-positive",
+    "frame": "Moon ME/PA per LOLA GDR"
+   },
+   "georef": {
+    "type": "polar-stereographic",
+    "radius_m": 1737400,
+    "scale_m": 20,
+    "N": 7584,
+    "I0": 3665,
+    "J0": 3665,
+    "pole": -1
+   },
+   "resolution_m": 20,
+   "verticalAccuracy": "LOLA ranging precision ~0.1 m, radial orbit error ~1 m (Mazarico et al. 2012). Gridded value between tracks is interpolated (GMT surface); per-pixel interpolation error not provided — treat <2 px features as unresolved.",
+   "file": "moon-south-pole-lola-20m.bin",
+   "encoding": "float32-le",
+   "sha256": "328698c487dbd4c671671709d071e290270eb87da9a5f7a65067e05f7be81cb9",
+   "stats": {
+    "min": -672.5,
+    "max": 1510,
+    "validFraction": 1
+   }
+  }
+ ]
+}
