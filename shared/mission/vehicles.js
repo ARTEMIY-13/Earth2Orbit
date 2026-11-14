@@ -55,10 +55,10 @@ export const VEHICLE_PRESETS = [
   },
   {
     id: "edu-mars",
-    name: "Навчальний марсіанський посадковий модуль (фаза після парашута)",
-    nameEn: "Educational Mars lander (post-parachute phase)",
+    name: "Навчальний марсіанський посадковий модуль (EDL + моторний спуск)",
+    nameEn: "Educational Mars lander (EDL + powered descent)",
     real: false,
-    note: "Вигаданий preset. EDL до старту моторного спуску не моделюється.",
+    note: "Вигаданий preset. Параметри аерооболонки й парашута — навчальні припущення порядку величин сучасних марсіанських місій, не дані конкретного апарата.",
     lander: {
       dryMass: p(900, "kg"),
       propellant: p(400, "kg"),
@@ -74,6 +74,26 @@ export const VEHICLE_PRESETS = [
       reserveFraction: p(0.05, "fraction of propellant"),
       maxThrustTilt: p(45, "deg from vertical"),
       dragArea: p(4, "m²·Cd"),
+    },
+    edl: {
+      aeroshellMass: p(600, "kg"),
+      heatShieldMass: p(300, "kg"),
+      aeroshellDiameter: p(4.5, "m"),
+      cdHypersonic: p(1.65, "-"),
+      noseRadius: p(1.1, "m"),
+      liftToDrag: p(0, "-"),
+      bankAngle_deg: p(0, "deg"),
+      flightPathAngle_deg: p(-12.5, "deg"),
+      chuteDiameter: p(21.5, "m"),
+      chuteCd: p(0.6, "-"),
+      chuteMachMin: p(1.1, "-"),
+      chuteMachMax: p(2.0, "-"),
+      chuteQMin: p(250, "Pa"),
+      chuteQMax: p(850, "Pa"),
+      minChuteAltitude: p(5000, "m"),
+      poweredDescentAltitude: p(1500, "m"),
+      maxHeatFlux_Wcm2: p(150, "W/cm²"),
+      maxDecel_g: p(15, "g0"),
     },
   },
   {
@@ -112,11 +132,29 @@ export const STACK_DEFAULTS = {
   transferDryMass: p(4000, "kg"),
   transferPropellant: p(30000, "kg"),
   transferIsp: p(450, "s"),
-  launcherLeoCapacity: p(45000, "kg", "assumed heavy-lift capacity to ~200 km LEO"),
   parkingAltitude: p(200000, "m"),
-  ascentLosses: p(1600, "m/s", "assumed gravity+drag+steering losses (typical 1.3–2 km/s)"),
   arrivalOrbitAltitude: p(100000, "m"),
 };
+
+/** Launch vehicles for the ascent simulation (shared/mission/ascent.js). */
+export const LAUNCHER_PRESETS = [
+  {
+    id: "edu-heavy",
+    name: "Навчальний двоступеневий важкий носій (вигаданий)",
+    note: "Вигаданий носій для навчального моделювання; усі параметри — припущення порядку величин важких носіїв. Не дані реальної ракети.",
+    stages: [
+      { dryMass: p(60000, "kg"), propellant: p(1000000, "kg"), thrustVac: p(22000000, "N"), ispVac: p(311, "s"), ispSl: p(282, "s"), cdA: p(12, "m²") },
+      { dryMass: p(12000, "kg"), propellant: p(200000, "kg"), thrustVac: p(2000000, "N"), ispVac: p(350, "s"), ispSl: p(350, "s"), cdA: p(12, "m²") },
+    ],
+  },
+];
+export function launcherValues(l) {
+  return { stages: l.stages.map((s) => values(s)) };
+}
+export function edlValues(edl, landerWet) {
+  const v = values(edl);
+  return { ...v, entryMass: landerWet + v.aeroshellMass };
+}
 
 export function presetById(id) {
   return VEHICLE_PRESETS.find((v) => v.id === id) || VEHICLE_PRESETS[0];

@@ -3,6 +3,7 @@
 // "insufficient" = недостатньо даних, "na" = не застосовно.
 // Rule: any critical "fail" → card fail; else any critical "insufficient" →
 // card insufficient; only then pass. Unknowns never become a pass.
+import { edlCriteria } from "./edl.js";
 import { pixelsInEllipse, regionStats, footprintPlane, meanSpacing, roughnessWindow } from "../terrain/analysis.js";
 
 export const STATUS_LABELS = {
@@ -252,27 +253,45 @@ export function landingCard(descent, lander) {
   };
 }
 
-export function transferCard(transfer, stack) {
+export function transferCard(transfer, stack, extras = {}) {
   if (!transfer) return { id: "transfer", title: "Переліт", status: "insufficient", criteria: [], error: "Розрахунок не виконано", unassessed: [] };
   if (transfer.applicable === false)
     return { id: "transfer", title: "Переліт", status: "na", criteria: [], note: transfer.note, unassessed: [] };
   if (!transfer.best)
     return { id: "transfer", title: "Переліт", status: "insufficient", criteria: [], error: transfer.error || "Розв'язок Lambert не знайдено у вікні", unassessed: transfer.unmodelled || [] };
   const b = transfer.best;
+  const { ascent, edl, edlVehicle } = extras;
   const criteria = [];
-  criteria.push(
-    crit({
-      id: "launcher",
-      label: "Маса стека vs можливості носія",
-      value: Math.round(transfer.stackMass),
-      unit: "кг",
-      threshold: `≤ ${stack.launcherLeoCapacity} кг на НОО (припущення)`,
-      source: "параметри користувача",
-      method: "сума мас (перелітний ступінь + посадковий апарат)",
-      status: transfer.stackMass <= stack.launcherLeoCapacity ? "pass" : "fail",
-      reason: transfer.stackMass <= stack.launcherLeoCapacity ? "Стек вміщується в заявлену можливість носія" : "Стек важчий за можливість носія",
-    }),
-  );
+  if (ascent) {
+    criteria.push(
+      crit({
+        id: "launcher",
+        label: "Виведення стека на паркувальну орбіту",
+        value: ascent.ok ? `${Math.round(ascent.perigeeAlt / 1000)}×${Math.round(ascent.apogeeAlt / 1000)} км` : ascent.reason || "не досягнуто",
+        unit: "",
+        threshold: `перигей ≥ ${Math.round((stack.parkingAltitude - 20000) / 1000)} км з корисним навантаженням ${Math.round(transfer.stackMass)} кг`,
+        source: "симуляція виведення (носій — навчальний preset)",
+        method: ascent.model + (ascent.ok ? `; нахил ${ascent.kick_deg}°, програма тангажу ${ascent.pitchFrac}` : ""),
+        status: ascent.ok ? "pass" : "fail",
+        reason: ascent.ok
+          ? `Залишок палива 2-го ступеня ${Math.round(ascent.propellantLeft)} кг (${(ascent.propellantLeftFraction * 100).toFixed(1)} %)`
+          : "Жоден варіант програми тангажу не вивів стек на орбіту: " + Object.entries(ascent.reasons || {}).map(([k, n]) => `${k}×${n}`).join(", "),
+      }),
+    );
+    if (ascent.ok)
+      criteria.push({
+        id: "ascent-losses",
+        critical: false,
+        label: "Втрати на виведенні (розраховано)",
+        value: Math.round(ascent.gravityLoss + ascent.dragLoss + ascent.steeringLoss),
+        unit: "м/с",
+        threshold: "інформаційно",
+        source: "симуляція",
+        method: `гравітаційні ${Math.round(ascent.gravityLoss)} + аеродинамічні ${Math.round(ascent.dragLoss)} + керування ${Math.round(ascent.steeringLoss)}; внесок обертання Землі +${Math.round(ascent.rotationBonus)}; max q ${(ascent.maxQ / 1000).toFixed(1)} кПа`,
+        status: "pass",
+        reason: "Без дроселювання для max q і без 3-D маневру площини",
+      });
+  }
   criteria.push(
     crit({
       id: "dv",
@@ -288,9 +307,10 @@ export function transferCard(transfer, stack) {
   );
   if (b.dla_deg !== undefined)
     criteria.push({ id: "dla", critical: false, label: "Схилення асимптоти відльоту (DLA)", value: r1(b.dla_deg), unit: "°", threshold: `|DLA| ≤ нахил парк. орбіти ≥ |широта старту| = ${r1(Math.abs(transfer.launchLat))}°`, source: "Lambert", method: "v∞ у екваторіальній системі J2000", status: "pass", reason: "Інформаційно: визначає мінімальний нахил паркувальної орбіти" });
-  if (b.entrySpeed !== undefined)
-    criteria.push(crit({ id: "edl", label: "Вхід в атмосферу Марса (EDL)", value: Math.round(b.entrySpeed), unit: "м/с", threshold: "модель нагріву/гальмування відсутня", source: "Lambert v∞ + енергія", method: "v_entry = √(v∞² + 2μ/r_entry)", status: "insufficient", reason: "Нагрів, теплозахист, парашут і керування входом не розраховуються — придатність EDL НЕ підтверджена" }));
-  criteria.push({ id: "ascent", critical: false, label: "Виведення на НОО (припущення)", value: Math.round(transfer.ascentDv), unit: "м/с", threshold: "покривається заявленою можливістю носія", source: "оцінка", method: "v_круг + задані втрати − внесок обертання Землі", status: "insufficient", reason: "Траєкторію виведення не моделюємо — лише бюджетна оцінка; висновок спирається на припущення про носій" });
+  if (b.entrySpeed !== undefined) {
+    if (edl && edlVehicle) criteria.push(...edlCriteria(edl, edlVehicle));
+    else criteria.push(crit({ id: "edl", label: "Вхід в атмосферу Марса (EDL)", value: Math.round(b.entrySpeed), unit: "м/с", threshold: "потрібна симуляція EDL", source: "Lambert v∞ + енергія", method: "v_entry = √(v∞² + 2μ/r_entry)", status: "insufficient", reason: "EDL не розраховано" }));
+  }
   return {
     id: "transfer",
     title: "Переліт",

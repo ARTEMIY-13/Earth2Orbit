@@ -138,3 +138,58 @@ test("scenario JSON round-trip and CSV units", () => {
   assert.match(csv, /distance_m,elevation_m/);
   assert.match(csv, /1\.00,,0\.000000,0\.000000,,1/);
 });
+
+// ---- Mars EDL and Earth ascent ------------------------------------------------
+import { simulateEDL, marsAtmosphere, SUTTON_GRAVES_K_MARS } from "./edl.js";
+import { simulateAscent, _simulateOnce } from "./ascent.js";
+import { LAUNCHER_PRESETS, launcherValues, edlValues } from "./vehicles.js";
+import { transferCard as tCard } from "./assessment.js";
+
+test("Mars atmosphere follows the NASA GRC model; Sutton–Graves constant from TR R-376", () => {
+  const a = marsAtmosphere(0);
+  near(a.p, 699, 1e-9);
+  near(a.rho, 0.699 / (0.1921 * (273.1 - 31)), 1e-9);
+  near(marsAtmosphere(10000).T, 273.1 - 23.4 - 22.2, 1e-9);
+  near(SUTTON_GRAVES_K_MARS, 0.121 / (2 * Math.sqrt(101325)), 1e-12);
+  near(SUTTON_GRAVES_K_MARS, 1.9e-4, 2e-6);
+});
+
+const marsEdlVehicle = () => edlValues(values(presetById("edu-mars").edl), 1300);
+test("Mars EDL: reaches powered-descent start, converges in dt, steeper entry → more heating & g", () => {
+  const base = { entrySpeedInertial: 5700, entryAltitude: 125000, entryAzimuth_deg: 90, latitude_deg: 18.4, siteElevation_m: -2640, vehicle: marsEdlVehicle() };
+  const a = simulateEDL({ ...base, flightPathAngle_deg: -12.5, dt: 0.05 });
+  const b = simulateEDL({ ...base, flightPathAngle_deg: -12.5, dt: 0.01 });
+  assert.equal(a.outcome, "powered-descent-start");
+  near(a.peakHeatFlux_Wcm2, b.peakHeatFlux_Wcm2, 0.05);
+  near(a.end.v, b.end.v, 0.1);
+  assert.ok(a.chute && a.chute.mach <= 2.0001);
+  const steep = simulateEDL({ ...base, flightPathAngle_deg: -18 });
+  assert.ok(steep.peakDecel_g > a.peakDecel_g && steep.peakHeatFlux_Wcm2 > a.peakHeatFlux_Wcm2);
+  // rotation correction: eastward entry is slower relative to the atmosphere
+  assert.ok(a.entry.speedRelative < a.entry.speedInertial);
+});
+
+test("Earth ascent: reaches the parking orbit; losses are positive; dt-converged; too heavy fails", () => {
+  const L = launcherValues(LAUNCHER_PRESETS[0]);
+  const a = simulateAscent({ launcher: L, payload: 30000, latitude_deg: 28.57, targetAltitude: 200000 });
+  assert.ok(a.ok, JSON.stringify(a.reasons));
+  assert.ok(a.perigeeAlt >= 180000 && a.apogeeAlt < 260000);
+  assert.ok(a.gravityLoss > 0 && a.dragLoss > 0 && a.steeringLoss >= 0);
+  near(a.rotationBonus, 7.2921159e-5 * 6378137 * Math.cos((28.57 * Math.PI) / 180), 1e-6);
+  const c1 = _simulateOnce(L, 30000, { latitude_deg: 28.57, targetAltitude: 200000, dt: 0.1 }, a.kick_deg, false, a.pitchFrac);
+  const c2 = _simulateOnce(L, 30000, { latitude_deg: 28.57, targetAltitude: 200000, dt: 0.05 }, a.kick_deg, false, a.pitchFrac);
+  near(c1.propellantLeft, c2.propellantLeft, 0.01 * L.stages[1].propellant);
+  assert.equal(simulateAscent({ launcher: L, payload: 200000, latitude_deg: 28.57, targetAltitude: 200000 }).ok, false);
+});
+
+test("transfer card uses simulated ascent and EDL instead of assumptions", () => {
+  const stack = values(STACK_DEFAULTS);
+  const m = planTransfer({ target: "mars", launchUtc: Date.UTC(2026, 9, 1), windowDays: 90, tofMinDays: 150, tofMaxDays: 300, launchLat: 28.57, stack, landerMass: 1900, arrivalMode: "entry" });
+  const ascent = simulateAscent({ launcher: launcherValues(LAUNCHER_PRESETS[0]), payload: m.stackMass, latitude_deg: 28.57, targetAltitude: stack.parkingAltitude });
+  const ev = marsEdlVehicle();
+  const edl = simulateEDL({ entrySpeedInertial: m.best.entrySpeed, entryAltitude: 125000, flightPathAngle_deg: ev.flightPathAngle_deg, entryAzimuth_deg: 90, latitude_deg: 18.4, siteElevation_m: -2640, vehicle: ev });
+  const card = tCard(m, stack, { ascent, edl, edlVehicle: ev });
+  const ids = card.criteria.map((c) => c.id);
+  assert.ok(ids.includes("launcher") && ids.includes("edl-heat") && ids.includes("edl-g"));
+  assert.ok(!card.criteria.some((c) => c.status === "insufficient" && c.id === "edl"), "EDL is computed, not 'insufficient'");
+});

@@ -7,7 +7,7 @@ import { makeGrid, offsetToPixel } from "../../../shared/terrain/analysis.js";
 import { latLonToPixel, pixelToLatLon, haversine } from "../../../shared/terrain/georef.js";
 import { ANALOG_LIMITS } from "../../../shared/terrain/analogs.js";
 import { localFrame } from "../../../shared/mission/descent.js";
-import { VEHICLE_PRESETS, STACK_DEFAULTS, DEFAULT_PRESET_BY_BODY, DEFAULT_START_BY_BODY, presetById, values, validateLander } from "../../../shared/mission/vehicles.js";
+import { VEHICLE_PRESETS, STACK_DEFAULTS, DEFAULT_PRESET_BY_BODY, DEFAULT_START_BY_BODY, presetById, values, validateLander, LAUNCHER_PRESETS, launcherValues, edlValues } from "../../../shared/mission/vehicles.js";
 import { zonedToUtc, formatUtc, formatZone, formatDuration } from "../../../shared/mission/time.js";
 import { bodyState, moonState } from "../../../shared/mission/ephemeris.js";
 import { buildPhases, stateAt } from "../../../shared/mission/timeline.js";
@@ -17,6 +17,7 @@ import { criteria } from "../../../shared/catalog.js";
 import DemMap from "./DemMap.jsx";
 import { LAYERS, layerColors } from "./layers.js";
 import VerdictCard from "./VerdictCard.jsx";
+import ImagingPanel from "./ImagingPanel.jsx";
 import { ProfileChart, SeriesChart, Porkchop, SlopeHistogram } from "./charts.jsx";
 import { createMissionScene } from "../../scene/landing.js";
 
@@ -112,6 +113,8 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   const [lander, setLander] = useState(() => structuredClone(presetById(DEFAULT_PRESET_BY_BODY[initialBody] || "edu-robotic").lander));
   const [start, setStart] = useState({ ...(DEFAULT_START_BY_BODY[initialBody] || DEFAULT_START_BY_BODY.moon) });
   const [stack, setStack] = useState(() => structuredClone(STACK_DEFAULTS));
+  const [launcher, setLauncher] = useState(() => structuredClone(LAUNCHER_PRESETS[0]));
+  const [edlParams, setEdlParams] = useState(() => structuredClone(presetById("edu-mars").edl));
   const [launch, setLaunch] = useState({ local: "2026-11-14T12:00", timeZone: "Europe/Kyiv", siteId: "ksc", lat: 28.573 });
   const [transferOpts, setTransferOpts] = useState(TRANSFER_DEFAULTS[initialBody] || TRANSFER_DEFAULTS.moon);
   const [exaggeration, setExaggeration] = useState(3);
@@ -129,6 +132,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   const [liveSource, setLiveSource] = useState("copernicus");
   const [hzCheck, setHzCheck] = useState(null);
   const [importNote, setImportNote] = useState("");
+  const [footprintsLL, setFootprintsLL] = useState([]);
 
   const meta = dem?.meta;
   const body = meta?.body || initialBody;
@@ -226,6 +230,10 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     }
     return pts;
   }, [grid, site, ellipse, approach]);
+  const footprints = useMemo(
+    () => (meta ? footprintsLL.map((poly) => poly.map((p) => latLonToPixel(meta.georef, p.lat, p.lon))) : []),
+    [footprintsLL, meta],
+  );
   const approachLine = useMemo(() => {
     if (!grid || !site) return null;
     const az = (approach * Math.PI) / 180;
@@ -235,7 +243,10 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   // ---- staleness keys ------------------------------------------------------------
   const terrainKey = key({ datasetId, site, ellipse, approach, profileLength, polyline, L });
   const descentKey = key({ datasetId, site, approach, L, start });
-  const transferKey = key({ body, launchUtc, lat: launch.lat, transferOpts, S, m: L.dryMass + L.propellant, hs: start.horizontalSpeed });
+  const LV = useMemo(() => launcherValues(launcher), [launcher]);
+  const marsEntry = body === "mars" && transferOpts.arrivalMode === "entry";
+  const EV = useMemo(() => (marsEntry ? edlValues(edlParams, L.dryMass + L.propellant) : null), [marsEntry, edlParams, L.dryMass, L.propellant]);
+  const transferKey = key({ body, launchUtc, lat: launch.lat, transferOpts, S, m: L.dryMass + L.propellant, hs: start.horizontalSpeed, LV, EV, site });
   const analogKey = key({ datasetId });
 
   // ---- computations ------------------------------------------------------------
@@ -257,7 +268,20 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
         if (!Number.isFinite(launchUtc)) throw new Error("Некоректна дата старту");
         out.transfer = await c.call(
           "transfer",
-          { target: meta.body, launchUtc, ...transferOpts, launchLat: launch.lat, stack: S, landerMass: L.dryMass + L.propellant, descentStart: { horizontalSpeed: start.horizontalSpeed } },
+          {
+            target: meta.body,
+            launchUtc,
+            ...transferOpts,
+            launchLat: launch.lat,
+            stack: S,
+            landerMass: L.dryMass + L.propellant + (EV ? EV.aeroshellMass : 0),
+            descentStart: { horizontalSpeed: start.horizontalSpeed },
+            launcher: LV,
+            edlVehicle: EV,
+            entryAzimuth_deg: approach,
+            siteLat: pixelToLatLon(meta.georef, site.col, site.row).lat,
+            siteElevation: grid.data[site.row * grid.width + site.col],
+          },
           { onProgress: (p) => setBusy({ label: "Пошук вікна старту (Lambert)…", progress: 0.5 + 0.35 * p }), timeout: 90000 },
         );
       } else {
@@ -273,7 +297,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
     } finally {
       setBusy(null);
     }
-  }, [meta, dem, site, ellipse, approach, L, profileLength, polyline, start, launchUtc, transferOpts, launch.lat, S, terrainKey, descentKey, transferKey, landerErrors.length]);
+  }, [meta, dem, grid, site, ellipse, approach, L, profileLength, polyline, start, launchUtc, transferOpts, launch.lat, S, LV, EV, terrainKey, descentKey, transferKey, landerErrors.length]);
 
   const runAnalogs = useCallback(async () => {
     if (!meta || !index) return;
@@ -335,6 +359,13 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   function choosePreset(id) {
     setVehicleId(id);
     setLander(structuredClone(presetById(id).lander));
+    if (presetById(id).edl) setEdlParams(structuredClone(presetById(id).edl));
+  }
+  function editEdl(k, v) {
+    setEdlParams((e) => ({ ...e, [k]: { ...e[k], value: Number(v), source: "користувач (змінено)" } }));
+  }
+  function editStage(i, k, v) {
+    setLauncher((l) => ({ ...l, stages: l.stages.map((st, j) => (j === i ? { ...st, [k]: { ...st[k], value: Number(v), source: "користувач (змінено)" } } : st)) }));
   }
   function editLander(k, v) {
     setLander((l) => ({ ...l, [k]: { ...(l[k] || { unit: "" }), value: Number(v), source: "користувач (змінено)" } }));
@@ -416,7 +447,9 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
   }, [cam, centerTab]);
 
   // ---- timeline / playback --------------------------------------------------------
-  const phases = useMemo(() => buildPhases(transfer, descent, body), [transfer, descent, body]);
+  const ascentRes = res.transfer?.ascent;
+  const edlRes = res.transfer?.edl;
+  const phases = useMemo(() => buildPhases(transfer, descent, body, { ascent: ascentRes, edl: edlRes }), [transfer, descent, body, ascentRes, edlRes]);
   const phase = phases[Math.min(play.phase, phases.length - 1)];
   const phaseLen = phase ? (phase.end - phase.start) / 1000 : 0;
   const current = useMemo(() => {
@@ -431,7 +464,8 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
       else sp = phase.id === "ascent" || phase.id === "parking" ? arc[0] : arc[arc.length - 1];
     }
     if (phase.id === "descent" && descent) ds = stateAt(descent.samples, local);
-    return { utc, local, space: sp, descent: ds, phase };
+    const ph = phase.samples ? stateAt(phase.samples, local) : null; // ascent / EDL states
+    return { utc, local, space: sp, descent: ds, phaseState: ph, phase };
   }, [phase, play.local, phaseLen, transfer, descent]);
   useEffect(() => {
     if (!scene.current || !current) return;
@@ -676,9 +710,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   </a>
                 </p>
                 {dem?.checksumOk && <p>SHA-256 перевірено ✓</p>}
-                <p className="m-muted">
-                  Геометрія знімання (висота камери, off-nadir/emission, сонячні кути) для DEM-продуктів не застосовна: це грід висот, а не окремий знімок. Метадані знімків тут не показуються — «недоступно».
-                </p>
+
               </div>
             )}
             {siteLL && (
@@ -713,6 +745,25 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 {!caps?.demEarthOnDemand && <p className="m-muted">{caps?.reason || "Потрібен Node-сервер."}</p>}
               </fieldset>
             )}
+          </details>
+          <details>
+            <summary>{tr("Геометрія знімання й розмежування величин")}</summary>
+            <ImagingPanel
+              key={datasetId}
+              body={body}
+              lat={siteLL?.lat}
+              lon={siteLL?.lon}
+              site={{
+                z: site && grid ? grid.data[site.row * grid.width + site.col] : null,
+                datum: meta?.datum?.description,
+                slope: site && layers ? layers.slope[site.row * grid.width + site.col] : null,
+                aspect: site && layers ? layers.aspect[site.row * grid.width + site.col] : null,
+                trajectory: descent
+                  ? `початковий кут траєкторії ${(Math.atan2(-descent.samples[0].vz, Math.hypot(descent.samples[0].vx, descent.samples[0].vy)) * 180 / Math.PI).toFixed(1)}° нижче горизонту; нахил тяги при торканні ${descent.touchdown?.thrustTilt_deg?.toFixed(1) ?? "—"}° (орієнтація = напрям тяги)`
+                  : null,
+              }}
+              onFootprints={setFootprintsLL}
+            />
           </details>
           <details open>
             <summary>2. {tr("Майданчик і захід")}</summary>
@@ -788,6 +839,21 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               ))}
             </div>
             <p className="m-muted">Крок фізики фіксований і не залежить від FPS чи швидкості перегляду.</p>
+            {edlRes?.outcome === "powered-descent-start" && (
+              <button
+                className="text-button"
+                onClick={() =>
+                  setStart((s) => ({
+                    ...s,
+                    altitude: Math.round(edlRes.end.h),
+                    verticalSpeed: -Math.round(edlRes.end.vVertical * 10) / 10,
+                    horizontalSpeed: Math.round(edlRes.end.vHorizontal * 10) / 10,
+                  }))
+                }
+              >
+                ⇣ Взяти стан після EDL ({r1(edlRes.end.h, 0)} м, v↓ {r1(edlRes.end.vVertical, 1)} м/с)
+              </button>
+            )}
           </details>
           {body !== "earth" && (
             <details>
@@ -847,7 +913,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                 <label>
                   Прибуття
                   <select value={transferOpts.arrivalMode} onChange={(e) => setTransferOpts((o) => ({ ...o, arrivalMode: e.target.value }))}>
-                    <option value="entry">Прямий вхід в атмосферу (EDL не моделюється)</option>
+                    <option value="entry">Прямий вхід в атмосферу (EDL моделюється)</option>
                     <option value="capture">Захоплення на орбіту (MOI)</option>
                   </select>
                 </label>
@@ -857,9 +923,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   ["transferDryMass", "Суха маса перелітного ступеня, кг"],
                   ["transferPropellant", "Паливо ступеня, кг"],
                   ["transferIsp", "Isp ступеня, с"],
-                  ["launcherLeoCapacity", "Можливість носія на НОО, кг"],
                   ["parkingAltitude", "Висота паркувальної орбіти, м"],
-                  ["ascentLosses", "Втрати на виведенні, м/с"],
                   ["arrivalOrbitAltitude", "Висота орбіти прибуття, м"],
                 ].map(([k, l]) => (
                   <label key={k} title={"Джерело: " + stack[k].source}>
@@ -869,6 +933,56 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   </label>
                 ))}
               </div>
+              <fieldset className="m-live">
+                <legend>Носій (симуляція виведення)</legend>
+                <p className="m-muted">{launcher.note}</p>
+                {launcher.stages.map((st, i) => (
+                  <div key={i} className="m-params">
+                    {[
+                      ["propellant", `Ступінь ${i + 1}: паливо, кг`],
+                      ["dryMass", "суха маса, кг"],
+                      ["thrustVac", "тяга (вакуум), Н"],
+                      ["ispVac", "Isp вакуум, с"],
+                      ...(i === 0 ? [["ispSl", "Isp біля землі, с"]] : []),
+                      ["cdA", "Cd·A, м²"],
+                    ].map(([k, l]) => (
+                      <label key={k}>
+                        {l}
+                        <input type="number" step="any" value={st[k].value} onChange={(e) => editStage(i, k, e.target.value)} />
+                      </label>
+                    ))}
+                  </div>
+                ))}
+              </fieldset>
+              {marsEntry && (
+                <fieldset className="m-live">
+                  <legend>EDL Марса (навчальні припущення)</legend>
+                  <div className="m-params">
+                    {[
+                      ["flightPathAngle_deg", "Кут входу γ, °"],
+                      ["aeroshellMass", "Маса аерооболонки, кг"],
+                      ["heatShieldMass", "з неї теплощит, кг"],
+                      ["aeroshellDiameter", "Діаметр, м"],
+                      ["cdHypersonic", "Cd гіперзвук"],
+                      ["noseRadius", "Радіус носка, м"],
+                      ["liftToDrag", "L/D"],
+                      ["chuteDiameter", "Парашут: діаметр, м"],
+                      ["chuteCd", "Парашут: Cd"],
+                      ["chuteMachMax", "Розкриття при M ≤"],
+                      ["chuteMachMin", "Мін. M розкриття"],
+                      ["chuteQMax", "Макс. q розкриття, Па"],
+                      ["poweredDescentAltitude", "Висота старту моторного спуску, м"],
+                      ["maxHeatFlux_Wcm2", "Допустимий тепловий потік, Вт/см²"],
+                      ["maxDecel_g", "Допустиме перевантаження, g₀"],
+                    ].map(([k, l]) => (
+                      <label key={k}>
+                        {l}
+                        <input type="number" step="any" value={edlParams[k].value} onChange={(e) => editEdl(k, e.target.value)} />
+                      </label>
+                    ))}
+                  </div>
+                </fieldset>
+              )}
             </details>
           )}
         </aside>
@@ -912,6 +1026,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               approachLine={approachLine}
               polyline={polyline}
               track={track}
+              footprints={footprints}
               contours={showContours && contours?.id === meta.id ? contours : null}
               hover={hoverPoint}
               mode={mapMode}
@@ -934,6 +1049,14 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
                   </span>
                 )}
                 {current?.utc && phases[0] && <span>T+ {formatDuration((current.utc - phases[0].start) / 1000)}</span>}
+                {current?.phaseState && (
+                  <>
+                    <span>висота {r1(current.phaseState.h / 1000, 2)} км</span>
+                    <span>швидкість {r1(current.phaseState.v, 0)} м/с</span>
+                    {current.phaseState.q_Wcm2 !== undefined && <span>тепловий потік {r1(current.phaseState.q_Wcm2, 1)} Вт/см² · {r1(current.phaseState.decel_g, 1)} g₀</span>}
+                    {current.phaseState.stage !== undefined && <span>ступінь {Math.round(current.phaseState.stage)} · маса {r1(current.phaseState.m / 1000, 1)} т</span>}
+                  </>
+                )}
                 {cd && (
                   <>
                     <span>висота над рельєфом {r1(cd.clearance, 1)} м</span>
@@ -984,9 +1107,16 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               <p>
                 {transfer.model}; {transfer.ephemeris}. Замикання дуги: {r1(transfer.best.arc.closureError_m, 1)} м.
               </p>
-              <p>
-                Виведення (оцінка): {r1(transfer.ascent.dv, 0)} м/с = v_круг {r1(transfer.ascent.vCircular, 0)} + втрати {r1(transfer.ascent.losses, 0)} − обертання Землі {r1(transfer.ascent.rotationBonus, 0)}
-              </p>
+              {ascentRes?.ok && (
+                <p>
+                  Виведення (симуляція): орбіта {r1(ascentRes.perigeeAlt / 1000, 0)}×{r1(ascentRes.apogeeAlt / 1000, 0)} км за {r1(ascentRes.t / 60, 1)} хв; втрати — гравітаційні {r1(ascentRes.gravityLoss, 0)}, аеродинамічні {r1(ascentRes.dragLoss, 0)}, керування {r1(ascentRes.steeringLoss, 0)} м/с; обертання Землі +{r1(ascentRes.rotationBonus, 0)} м/с.
+                </p>
+              )}
+              {edlRes && (
+                <p>
+                  EDL: вхід {r1(edlRes.entry.speedRelative, 0)} м/с відносно атмосфери (поправка на обертання {r1(edlRes.entry.rotationCorrection, 0)} м/с), γ {edlRes.entry.flightPathAngle_deg}°; пік {r1(edlRes.peakHeatFlux_Wcm2, 1)} Вт/см² і {r1(edlRes.peakDecel_g, 1)} g₀; на старті моторного спуску v = {r1(edlRes.end.v, 1)} м/с на висоті {r1(edlRes.end.h, 0)} м.
+                </p>
+              )}
               {caps?.horizons ? (
                 <button className="text-button" onClick={checkHorizons}>
                   Звірити ефемериду цілі з JPL Horizons
@@ -1040,6 +1170,7 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
             ["profiles", "Профілі"],
             ["descent", "Спуск"],
             ["window", "Вікно старту"],
+            ["ascent", "Виведення й EDL"],
             ["analogs", "Земні аналоги"],
           ].map(([id, l]) => (
             <button key={id} role="tab" aria-selected={bottomTab === id} className={bottomTab === id ? "active" : ""} onClick={() => setBottomTab(id)}>
@@ -1103,6 +1234,39 @@ export default function MissionPlanner({ body: initialBody, site: catalogSite, e
               </>
             ) : (
               <p className="m-muted">Немає симуляції.</p>
+            )}
+          </div>
+        )}
+        {bottomTab === "ascent" && (
+          <div className="m-charts">
+            {ascentRes?.ok ? (
+              <SeriesChart
+                samples={ascentRes.samples}
+                title="Виведення на НОО (симуляція)"
+                t={current?.phase?.id === "ascent" ? current.local : NaN}
+                series={[
+                  { key: "h", label: "висота", color: "#60a5fa", unit: "м", zero: true },
+                  { key: "v", label: "швидкість (інерц.)", color: "#fbbf24", unit: "м/с", zero: true },
+                  { key: "q", label: "динамічний тиск", color: "#f472b6", unit: "Па", dash: "3 3", zero: true },
+                ]}
+              />
+            ) : (
+              <p className="m-muted">{ascentRes ? "Виведення не вдалося: " + JSON.stringify(ascentRes.reasons) : "Немає результату виведення (лише для Місяця й Марса)."}</p>
+            )}
+            {edlRes ? (
+              <SeriesChart
+                samples={edlRes.samples}
+                title="EDL Марса до старту моторного спуску"
+                t={current?.phase?.id === "arrival" ? current.local : NaN}
+                series={[
+                  { key: "h", label: "висота над місцевістю", color: "#60a5fa", unit: "м", zero: true },
+                  { key: "v", label: "швидкість відн. атмосфери", color: "#fbbf24", unit: "м/с", zero: true },
+                  { key: "q_Wcm2", label: "тепловий потік", color: "#f87171", unit: "Вт/см²", zero: true },
+                  { key: "decel_g", label: "перевантаження", color: "#a78bfa", unit: "g₀", dash: "3 3", zero: true },
+                ]}
+              />
+            ) : (
+              body === "mars" && <p className="m-muted">EDL розраховується в режимі «прямий вхід».</p>
             )}
           </div>
         )}

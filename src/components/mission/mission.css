@@ -129,3 +129,6 @@
   .m-params, .m-row { grid-template-columns: 1fr; }
   .m-charts { padding: 6px 16px; }
 }
+.m-imaging { display: grid; gap: 6px; }
+.m-quantities caption { text-align: left; font-size: 10.5px; color: var(--muted); padding-bottom: 4px; }
+.m-quantities th { color: #dce6ef; font-weight: 600; width: 42%; }

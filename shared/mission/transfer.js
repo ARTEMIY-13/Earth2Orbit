@@ -20,13 +20,7 @@ function hyperbolicBurn(vinf, mu, r) {
   return Math.sqrt(vinf * vinf + (2 * mu) / r) - Math.sqrt(mu / r);
 }
 
-export function ascentEstimate(lat_deg, parkingAlt, losses) {
-  const E = BODIES.earth;
-  const r = E.radius + parkingAlt;
-  const vc = Math.sqrt(E.GM / r);
-  const rot = E.rotationRate * E.radius * Math.cos((lat_deg * Math.PI) / 180);
-  return { dv: vc + losses - rot, vCircular: vc, rotationBonus: rot, losses, note: "Due-east launch assumed; trajectory not simulated." };
-}
+
 
 /**
  * opts: { target, launchUtc, windowDays, tofMinDays, tofMaxDays, depStepDays,
@@ -39,7 +33,6 @@ export function planTransfer(opts) {
   const stackMass = stack.transferDryMass + stack.transferPropellant + opts.landerMass;
   const mf = stack.transferDryMass + opts.landerMass;
   const dvAvailable = stack.transferIsp * G0 * Math.log(stackMass / mf);
-  const ascent = ascentEstimate(opts.launchLat, stack.parkingAltitude, stack.ascentLosses);
   const common = {
     model: TRANSFER_MODEL_VERSION,
     ephemeris: EPHEMERIS_MODEL,
@@ -47,8 +40,6 @@ export function planTransfer(opts) {
     launchLat: opts.launchLat,
     stackMass,
     dvAvailable,
-    ascentDv: ascent.dv,
-    ascent,
   };
   if (target === "earth")
     return { ...common, applicable: false, note: "Ціль — Земля: міжтілесний переліт не застосовується. Аналізується лише локальний тестовий спуск." };
@@ -64,7 +55,7 @@ export function planTransfer(opts) {
   const unmodelled =
     target === "moon"
       ? ["Гравітація Місяця на перельоті (patched conic)", "Вплив Сонця, тиск світла", "Корекції траєкторії (TCM)", "Вибір площини парк. орбіти та часу старту в межах доби", "Низькоенергетичні/багатотільні траєкторії — не підтримуються"]
-      : ["Корекції траєкторії (TCM) і навігаційні похибки", "Вхід, гальмування й парашут (EDL) — не моделюються", "Тиск сонячного світла, збурення інших планет", "Час старту в межах доби і площина парк. орбіти"];
+      : ["Корекції траєкторії (TCM) і навігаційні похибки", "EDL — лише спрощена планарна модель (без радіаційного нагріву, вітру, 3-D і похибок навігації)", "Тиск сонячного світла, збурення інших планет", "Час старту в межах доби і площина парк. орбіти"];
   for (let i = 0; i < nDep; i++) {
     if (opts.signal?.aborted) throw new Error("Скасовано");
     const dep = opts.launchUtc + i * depStep;
@@ -118,7 +109,7 @@ function marsCell(dep, arr, tof, rPark, stack, opts) {
     dvStage,
     dvBreakdown: capture
       ? `TMI ${Math.round(dvDep)} + MOI ${Math.round(dvCap)} м/с (ідеальні імпульси)`
-      : `TMI ${Math.round(dvDep)} м/с; прибуття — прямий вхід (EDL не моделюється)`,
+      : `TMI ${Math.round(dvDep)} м/с; прибуття — прямий вхід в атмосферу (EDL моделюється окремо)`,
   };
 }
 

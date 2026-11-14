@@ -10,7 +10,7 @@
     "dev": "vite",
     "dev:server": "node scripts/dev.mjs",
     "start": "node server/index.mjs",
-    "test": "node --test server/api.test.mjs server/node-api.test.mjs shared/terrain/terrain.test.mjs shared/mission/mission.test.mjs",
+    "test": "node --test server/api.test.mjs server/node-api.test.mjs shared/terrain/terrain.test.mjs shared/terrain/imaging.test.mjs shared/mission/mission.test.mjs",
     "build": "vite build",
     "build:pages": "vite build --mode pages",
     "lint": "oxlint src server shared scripts && oxlint --max-warnings 0 shared scripts server/data src/components/mission src/workers src/scene/landing.js src/lib/dem.js src/lib/missionWorker.js",

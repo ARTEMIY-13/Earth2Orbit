@@ -7,6 +7,8 @@ import { compareTerrain } from "../../shared/terrain/analogs.js";
 import { simulateDescent } from "../../shared/mission/descent.js";
 import { planTransfer } from "../../shared/mission/transfer.js";
 import { terrainCard, landingCard, transferCard } from "../../shared/mission/assessment.js";
+import { simulateAscent } from "../../shared/mission/ascent.js";
+import { simulateEDL } from "../../shared/mission/edl.js";
 
 const grids = new Map();
 const LIMITS = { maxPixels: 512 * 512, maxDescentSteps: 40000, maxTransferCells: 240 * 240 };
@@ -69,7 +71,24 @@ const handlers = {
         }
       },
     });
-    return { transfer: res, card: transferCard(res, payload.stack) };
+    let ascent = null,
+      edl = null;
+    if (res.applicable !== false && payload.launcher) {
+      progress(0.9);
+      ascent = simulateAscent({ launcher: payload.launcher, payload: res.stackMass, latitude_deg: payload.launchLat, targetAltitude: payload.stack.parkingAltitude });
+    }
+    if (res.best?.entrySpeed !== undefined && payload.edlVehicle) {
+      edl = simulateEDL({
+        entrySpeedInertial: res.best.entrySpeed,
+        entryAltitude: 125000,
+        flightPathAngle_deg: payload.edlVehicle.flightPathAngle_deg,
+        entryAzimuth_deg: payload.entryAzimuth_deg ?? 90,
+        latitude_deg: payload.siteLat,
+        siteElevation_m: payload.siteElevation,
+        vehicle: payload.edlVehicle,
+      });
+    }
+    return { transfer: res, ascent, edl, card: transferCard(res, payload.stack, { ascent, edl, edlVehicle: payload.edlVehicle }) };
   },
   analogs({ targetId, candidateIds }) {
     const t = grid(targetId);

@@ -6,7 +6,7 @@ import { layerColors } from "./layers.js";
  * 2D map of the DEM grid in its native projection (no reprojection).
  * Overlays are given in pixel coordinates.
  */
-export default function DemMap({ meta, data, layers, layer, maxSlope, site, ellipseOutline, approachLine, polyline, track, contours, hover, mode, onPick, onPolylinePoint, onHoverPixel }) {
+export default function DemMap({ meta, data, layers, layer, maxSlope, site, ellipseOutline, approachLine, polyline, track, footprints, contours, hover, mode, onPick, onPolylinePoint, onHoverPixel }) {
   const canvas = useRef(null);
   const [readout, setReadout] = useState(null);
   const { width: w, height: h } = meta;
@@ -69,6 +69,7 @@ export default function DemMap({ meta, data, layers, layer, maxSlope, site, elli
       ctx.stroke();
       ctx.setLineDash([]);
     };
+    for (const fp of footprints || []) poly(fp, "#c084fc", 1.5, [3, 3]);
     poly(ellipseOutline, "#fbbf24", 2, [6, 4]);
     poly(approachLine, "#f472b6", 2);
     if (approachLine?.length === 2) {
@@ -101,7 +102,7 @@ export default function DemMap({ meta, data, layers, layer, maxSlope, site, elli
       ctx.fill();
       ctx.stroke();
     }
-  }, [base, site, ellipseOutline, approachLine, polyline, track, contours, hover, layer, layers, maxSlope, w, h]);
+  }, [base, site, ellipseOutline, approachLine, polyline, track, footprints, contours, hover, layer, layers, maxSlope, w, h]);
 
   function toPixel(e) {
     const r = e.currentTarget.getBoundingClientRect();
