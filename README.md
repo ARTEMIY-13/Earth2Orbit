@@ -1,3 +1,92 @@
+Our project video -- https://www.youtube.com/watch?v=mwQuClk9Nj8
+
+# ORBITAL — Earth Analog Explorer
+ 
+A standalone React + Node.js application for the NASA Space Apps 2026 challenge “Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars”. This is an independent educational and research project. Sources and the limits of each analogy are shown in the interface.
+ 
+## Running locally
+ 
+Requires Node.js 22.13 or newer.
+ 
+```sh
+cd orbital
+npm ci
+npm run dev
+```
+ 
+Open the address printed by the server. Run `npm test` to execute the checks.
+ 
+## Production run
+ 
+```sh
+npm run build
+npm start
+```
+ 
+The Node.js server serves the React build from `dist/client` and the `/api` from a single origin. The port is set by the `PORT` variable and defaults to 3000. For Railway, set the Root Directory to `/orbital`. `railway.json` configures the build, the start command and the `/api/health` check. GitHub Pages cannot run the Node.js API, so the full application needs Node hosting.
+ 
+## Features
+ 
+- Three.js visualization of the Earth, Moon, Mars and Sun, direct planet selection, and markers shown only for the active world.
+- Detailed local textures, auto-scrolling galleries, and an OpenStreetMap geographic map for Earth locations.
+- A catalog of analogs with NASA/ESA sources, filters, and a comparison of confirmed traits. Missing data is marked as unknown.
+- Live NASA POWER climate data with units, period and origin, cached for one day in the server’s memory.
+- Analysis of new candidate sites. Declared geological traits are kept separate from the project’s climate filters. Candidates are unverified, stored in the browser, and can be exported as JSON.
+- ORI guide: the “✧ ORI Guide” button in the header is always available on any page. The guide answers questions about the whole project (purpose, catalog, methodology, sources, climate, map, candidates, technologies) using only the project’s data; if the data has no answer, it says so directly. Ask about the selected point with the words “this location”, and about any other point by name. The conversation is kept while the page stays open. The guide executes commands: “Add Atacama and Namib to the comparison”, “Remove … from the comparison”, “Clear the comparison”, “Create candidate Death Valley 36.5 -117.1 Mars aridity cold” (with “evaluate”, the analysis starts immediately). Voice output: in English, with the browser’s voice; in Ukrainian, with the browser’s voice, or, if none is available, with the Piper neural model “ukrainian_tts” (rhasspy/piper-voices, MIT), which runs directly in the browser via onnxruntime-web. The model (~77 MB) is downloaded from Hugging Face on first playback and cached. If no voice is available at all, the voice buttons are hidden.
+- 3D ORI avatar: a detailed astronaut (glass visor, face with blinking and lip movement synchronized to the voice, backpack, hoses). The model can be rotated 360° with a mouse or finger; without interaction it slowly rotates on its own.
+ 
+## Chat configuration
+ 
+ORI’s AI answers work through the Node server (`npm run dev:server`, `npm start` or hosting such as Railway). The server picks the first configured provider:
+ 
+| Variable | Provider | Cost |
+|---|---|---|
+| `GEMINI_API_KEY` (+ `GEMINI_MODEL`) | Google Gemini, key from https://aistudio.google.com/apikey | free tier, best Ukrainian |
+| `GROQ_API_KEY` (+ `GROQ_MODEL`) | Groq, key from https://console.groq.com/keys | free tier |
+| `OPENAI_API_KEY` (+ `OPENAI_MODEL`) | OpenAI | paid |
+| no key | Pollinations, no registration | free, ~1 answer / 45 s per server IP |
+ 
+Set keys in the `.env` file (template: `.env.example`; the `.env` file itself is not committed to git) or in your hosting’s environment variables, never in `VITE_*` or client code. The model receives only the project’s facts and is instructed not to invent anything. If AI is unavailable or the free limit is exhausted, the guide’s local knowledge base answers instead, and this is noted under the answer. `FREE_AI=0` disables the keyless option. GitHub Pages has no server, so the local knowledge base always answers there. For production, you can set `PUBLIC_ORIGIN` to the site’s address without a trailing `/`.
+ 
+## Structure and limitations
+ 
+`src` contains the React components and the Three.js/Leaflet adapters, which clean up their resources. `shared` holds the catalog and filters, `server` is the HTTP API, and `public/assets` holds local textures and photographs. The server validates coordinates, allowed criteria, request size and origin; request limits and the cache apply per process.
+ 
+An analogy is not proof that a site is suitable for settlement. POWER data are regional climate norms that do not replace on-site measurements. Long-term records and shared candidates would require a database. 3D requires WebGL; without it, a photo map is shown. Credits for photographs and textures are given in the application.
+ 
+## Verified
+ 
+Eight API tests, the production build, the server’s page delivery and `/api/health`. The public ORBITAL was previously checked in a browser, including filters, comparison, the map and NASA data. The full 3D scene was not verified in the available test browser because WebGL was disabled.
+ 
+ 
+## GitHub Pages
+ 
+Site: https://artemiy-13.github.io/Earth2Orbit/
+ 
+```sh
+npm ci
+npm run deploy
+```
+ 
+`deploy` builds the project in `pages` mode (`base=/Earth2Orbit/`, `VITE_STATIC_API=true`) and publishes `dist/client` to the `gh-pages` branch. Without a Node server, the `/api` handlers run in the browser and NASA POWER is called directly. The AI chat is disabled on Pages. In Settings → Pages, choose the `gh-pages` branch and the `/ (root)` folder.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Ukrainian version of README
+
 # ORBITAL — Earth Analog Explorer
 
 Самостійний React + Node.js застосунок для завдання NASA Space Apps 2026 “Identify Earth Locations that Analog the Permanent Moon Base Locations and Mars”. Це незалежний навчально-дослідницький проєкт. Джерела й межі аналогій наведено в інтерфейсі.
