@@ -3,6 +3,12 @@ import { apiFetch } from "../lib/api";
 import Modal from "./Modal.jsx";
 import { createAvatar } from "../scene/avatar.js";
 import { useLang } from "../i18n/LanguageContext.jsx";
+import { createUkSpeaker, isUkVoiceCached, loadUkVoice, UK_MODEL_MB } from "../lib/ukVoice.js";
+
+const browserVoice = (lang) =>
+  window.speechSynthesis?.getVoices().find((voice) => voice.lang.toLowerCase().startsWith(lang));
+const canRunNeuralVoice = () =>
+  typeof WebAssembly === "object" && typeof AudioContext === "function" && "caches" in window;
 
 // Гід ORI відповідає про весь проєкт. Вибрана точка (site) — лише додатковий
 // контекст: про неї питають словами «ця локація». Розмова живе в App, тому
@@ -22,7 +28,9 @@ export default function GuideModal({
     speaking = useRef(false),
     request = useRef(null),
     messagesEnd = useRef(null),
-    speechId = useRef(0);
+    speechId = useRef(0),
+    level = useRef(0),
+    ukSpeaker = useRef(null);
   const intro =
     L(
       "Вітаю! Я ОРІ — науковий гід ORBITAL. Відповідаю на запитання про весь проєкт: каталог земних аналогів, методику, джерела, клімат NASA POWER, карту й кандидатури. Відповідаю лише з даних проєкту, а якщо відповіді в них немає — так і скажу.",
@@ -42,19 +50,66 @@ export default function GuideModal({
     [status, setStatus] = useState(tr("Перевірка підключення AI…")),
     [voiceStatus, setVoiceStatus] = useState(tr("Озвучення голосом браузера")),
     [autoSpeak, setAutoSpeak] = useState(true),
-    [speechActive, setSpeechActive] = useState(false);
+    [speechActive, setSpeechActive] = useState(false),
+    [voiceReady, setVoiceReady] = useState(null), // null = ще перевіряємо
+    [ukCached, setUkCached] = useState(false),
+    [aiLabel, setAiLabel] = useState(null),
+    [hintGone, setHintGone] = useState(false);
+  // Чи є чим озвучити поточну мову: браузерний голос або нейронний український Piper.
+  useEffect(() => {
+    const check = () =>
+      setVoiceReady(Boolean(browserVoice(lang)) || (lang === "uk" && canRunNeuralVoice()));
+    check();
+    window.speechSynthesis?.addEventListener?.("voiceschanged", check);
+    isUkVoiceCached().then((cached) => {
+      setUkCached(cached);
+      // голос уже в кеші — готуємо модель заздалегідь, щоб озвучення почалося одразу
+      if (cached && lang === "uk" && !browserVoice("uk") && canRunNeuralVoice()) loadUkVoice().catch(() => {});
+    });
+    return () => window.speechSynthesis?.removeEventListener?.("voiceschanged", check);
+  }, [lang]);
+  function ukNeural() {
+    if (!ukSpeaker.current)
+      ukSpeaker.current = createUkSpeaker({
+        onProgress: (p) =>
+          setVoiceStatus(`Завантажую український голос… ${Math.round(p * 100)}% (${UK_MODEL_MB} МБ, лише один раз)`),
+        onStart: () => {
+          speaking.current = true;
+          setSpeechActive(true);
+          setUkCached(true);
+          setVoiceStatus("ОРІ розповідає…");
+        },
+        onEnd: () => {
+          speaking.current = false;
+          setSpeechActive(false);
+          setVoiceStatus("Розповідь завершено");
+        },
+        onError: () => {
+          speaking.current = false;
+          setSpeechActive(false);
+          setVoiceStatus("Не вдалося завантажити український голос. Розповідь є в чаті.");
+        },
+      });
+    return ukSpeaker.current;
+  }
   function stop() {
     speechId.current++;
     window.speechSynthesis?.cancel();
+    ukSpeaker.current?.stop();
     speaking.current = false;
     setSpeechActive(false);
   }
-  function speak(text) {
+  // auto = озвучення відповіді без кліку: великий голос не завантажуємо без дозволу.
+  function speak(text, { auto = false } = {}) {
     stop();
     const synth = window.speechSynthesis;
-    const voice = synth
-      ?.getVoices()
-      .find((voice) => voice.lang.toLowerCase().startsWith(lang));
+    const voice = browserVoice(lang);
+    if (!voice && lang === "uk" && canRunNeuralVoice()) {
+      if (auto && !ukCached) return;
+      setVoiceStatus(ukCached ? "Готую голос…" : `Завантажую український голос… (${UK_MODEL_MB} МБ, лише один раз)`);
+      ukNeural().speak(text);
+      return;
+    }
     if (!voice) {
       setVoiceStatus(
         tr(lang === "en"
@@ -91,7 +146,13 @@ export default function GuideModal({
   useEffect(() => {
     let cleanup;
     try {
-      cleanup = createAvatar(canvas.current, () => speaking.current);
+      cleanup = createAvatar(canvas.current, () => {
+        if (!speaking.current) return 0;
+        const neural = ukSpeaker.current?.level() ?? 0;
+        // Для браузерного голосу рівня гучності немає — імітуємо мовлення.
+        level.current = neural || 0.35 + 0.65 * Math.abs(Math.sin(performance.now() / 85));
+        return level.current;
+      }, { onInteract: () => setHintGone(true) });
     } catch {
       setVoiceStatus(
         tr("3D-аватар недоступний у цьому браузері. Розповідь є в чаті."),
@@ -101,6 +162,7 @@ export default function GuideModal({
       cleanup?.();
       speechId.current++;
       window.speechSynthesis?.cancel();
+      ukSpeaker.current?.stop();
       request.current?.abort();
     };
   }, [tr]);
@@ -115,11 +177,12 @@ export default function GuideModal({
       .then((result) => {
         setReady(true);
         setLocalOnly(result.configured !== true);
+        setAiLabel(result.provider?.label || null);
         setStatus(
           result.configured && !result.local
             ? L(
-                "AI підключено · відповіді лише з даних проєкту",
-                "AI connected · answers grounded in project data only",
+                `AI підключено (${result.provider?.label}${result.provider?.free ? ", безкоштовно" : ""}) · відповіді лише з даних проєкту`,
+                `AI connected (${result.provider?.label}${result.provider?.free ? ", free" : ""}) · answers grounded in project data only`,
               )
             : localText,
         );
@@ -144,7 +207,7 @@ export default function GuideModal({
       .map((action) => onAction?.(action))
       .filter(Boolean);
   }
-  function addReply(text, actions = []) {
+  function addReply(text, actions = [], meta = {}) {
     const notes = runAuto(actions);
     setMessages((values) => [
       ...values,
@@ -152,6 +215,9 @@ export default function GuideModal({
         role: "assistant",
         content: [text, ...notes].join("\n\n"),
         actions: actions.filter((action) => action.label),
+        source: meta.source,
+        fallback: meta.fallback,
+        retryAfter: meta.retryAfter,
       },
     ]);
     return text;
@@ -168,7 +234,7 @@ export default function GuideModal({
         const { guideReply } = await import("../../server/local-chat.mjs");
         const reply = guideReply(site ? world : null, site, next, lang, { compareIds });
         const text = addReply(reply.text, reply.actions);
-        if (autoSpeak) speak(text);
+        if (autoSpeak) speak(text, { auto: true });
         return;
       }
       const response = await apiFetch("/api/chat", {
@@ -185,8 +251,8 @@ export default function GuideModal({
       const result = await response.json();
       if (!response.ok)
         throw new Error(tr(result.error || "Не вдалося отримати відповідь"));
-      addReply(result.text, result.actions);
-      if (autoSpeak) speak(result.text);
+      addReply(result.text, result.actions, result);
+      if (autoSpeak) speak(result.text, { auto: true });
     } catch (error) {
       if (error.name !== "AbortError")
         setMessages((values) => [
@@ -224,20 +290,31 @@ export default function GuideModal({
         <div className="avatar-column">
           <div className="avatar-stage">
             <canvas id="avatarCanvas" ref={canvas} aria-label={tr("3D-гід ОРІ")} />
+            <span className={"avatar-hint" + (hintGone ? " gone" : "")}>
+              {L("↻ Потягни, щоб покрутити на 360°", "↻ Drag to rotate 360°")}
+            </span>
             <span className="avatar-tag">
               <i />
               {tr("ОРІ · твій гід")}
             </span>
           </div>
-          <button className="action" onClick={() => speak(intro)}>
-            {L("▶ Послухати вступ", "▶ Listen to the intro")}
-          </button>
+          {voiceReady && (
+            <button className="action" onClick={() => speak(intro)}>
+              {L("▶ Послухати вступ", "▶ Listen to the intro")}
+            </button>
+          )}
           {speechActive && (
             <button className="text-button" onClick={stop}>
               {tr("■ Зупинити")}
             </button>
           )}
-          <p className="mini-note">{voiceStatus}</p>
+          <p className="mini-note">
+            {voiceReady === false
+              ? L("У цьому браузері немає голосу для озвучення. Розповідь є в чаті.", "No speech voice in this browser. The story is in the chat.")
+              : lang === "uk" && !browserVoice("uk") && !ukCached && !speechActive && voiceStatus === tr("Озвучення голосом браузера")
+                ? `Нейронний український голос Piper · ${UK_MODEL_MB} МБ завантажаться при першому прослуховуванні`
+                : voiceStatus}
+          </p>
         </div>
         <div className="chat-column">
           <div className="chat-context">
@@ -265,6 +342,20 @@ export default function GuideModal({
                   {message.role === "user" ? tr("ТИ") : tr("ОРІ · ГІД")}
                 </span>
                 <span>{message.content}</span>
+                {message.role === "assistant" && message.source && (
+                  <span className={"message-source " + message.source}>
+                    {message.source === "ai"
+                      ? L(`AI · ${aiLabel || "AI"} · з даних проєкту`, `AI · ${aiLabel || "AI"} · from project data`)
+                      : message.fallback === "limit"
+                        ? L(
+                            `Безкоштовний AI просить паузу${message.retryAfter ? ` ~${message.retryAfter} с` : ""} — відповідь з бази гіда`,
+                            `Free AI asks for a pause${message.retryAfter ? ` of ~${message.retryAfter} s` : ""} — answer from the guide's knowledge base`,
+                          )
+                        : message.fallback
+                          ? L("AI зараз недоступний — відповідь з бази гіда", "AI unavailable right now — answer from the guide's knowledge base")
+                          : L("Відповідь з бази гіда", "Answer from the guide's knowledge base")}
+                  </span>
+                )}
                 {message.actions?.length > 0 && (
                   <span className="message-actions">
                     {message.actions.map((action, i) => (
@@ -285,7 +376,7 @@ export default function GuideModal({
                     ))}
                   </span>
                 )}
-                {message.role === "assistant" && (
+                {message.role === "assistant" && voiceReady && (
                   <button onClick={() => speak(message.content)}>
                     {tr("▷ Озвучити")}
                   </button>
@@ -334,14 +425,14 @@ export default function GuideModal({
               ↑
             </button>
           </form>
-          <label className="voice-setting">
+          {voiceReady && <label className="voice-setting">
             <input
               type="checkbox"
               checked={autoSpeak}
               onChange={(event) => setAutoSpeak(event.target.checked)}
             />
             {tr("Озвучувати відповіді")}
-          </label>
+          </label>}
         </div>
       </div>
     </Modal>

@@ -26,7 +26,7 @@ const vite = dev
   : null;
 const server = createServer(async (req, res) => {
   if (req.url?.startsWith("/api/")) {
-    await serveAPI(req, res, process.env);
+    await serveAPI(req, res, { FREE_AI: "1", LOCAL_GUIDE: "1", ...process.env });
     return;
   }
   if (vite) {

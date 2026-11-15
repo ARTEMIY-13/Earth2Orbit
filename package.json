@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "dev:server": "node scripts/dev.mjs",
-    "start": "node server/index.mjs",
+    "start": "node --env-file-if-exists=.env server/index.mjs",
     "test": "node --test server/api.test.mjs",
     "build": "vite build",
     "build:pages": "vite build --mode pages",
@@ -21,6 +21,7 @@
   "dependencies": {
     "leaflet": "1.9.4",
     "maplibre-gl": "^6.18.0",
+    "onnxruntime-web": "^1.29.0",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "three": "0.160.0"
