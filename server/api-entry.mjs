@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { serveAPI } from "./http.mjs";
-const server = createServer((req, res) => serveAPI(req, res, process.env));
+const server = createServer((req, res) => serveAPI(req, res, { FREE_AI: "1", LOCAL_GUIDE: "1", ...process.env }));
 server.requestTimeout = 30000;
 server.headersTimeout = 10000;
 server.listen(Number(process.env.PORT || 3000), "0.0.0.0", () =>

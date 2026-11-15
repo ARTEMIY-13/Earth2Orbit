@@ -276,3 +276,56 @@ test("a place answer offers a quick add-to-comparison button", async () => {
   const res = await (await ask(say("Розкажи про Атакаму"))).json();
   assert.equal(res.actions[0].label.startsWith("⇄"), true);
 });
+
+// ---- AI-провайдери ------------------------------------------------------------
+const askWith = (payload, env, fetcher) =>
+  handleAPI(
+    api("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "ai-test-" + ++askCounter },
+      body: JSON.stringify(payload),
+    }),
+    env,
+    fetcher,
+  );
+
+test("free keyless AI answers from project facts", async () => {
+  let sent;
+  const fetcher = async (url, init) => {
+    sent = { url, body: JSON.parse(init.body), headers: init.headers };
+    return Response.json({ choices: [{ message: { content: "**Атакама** — документований аналог Марса." } }] });
+  };
+  const res = await askWith(say("Чим цікава Атакама для Марса?"), { FREE_AI: "1", LOCAL_GUIDE: "1" }, fetcher);
+  const result = await res.json();
+  assert.equal(result.source, "ai");
+  assert.equal(result.text, "Атакама — документований аналог Марса.");
+  assert.match(sent.url, /pollinations/);
+  assert.equal(sent.headers.Authorization, undefined);
+  assert.equal(sent.body.messages[0].role, "system");
+  assert.match(sent.body.messages[0].content, /PROJECT FACTS/);
+  assert.match(sent.body.messages[0].content, /українською/);
+});
+
+test("free AI limit falls back to the local guide", async () => {
+  const fetcher = async () =>
+    Response.json({ error: { code: "FREE_LIMIT", message: "Free limit reached. Retry after 26s" } }, { status: 402 });
+  const result = await (await askWith(say("Що це за проєкт?"), { FREE_AI: "1", LOCAL_GUIDE: "1" }, fetcher)).json();
+  assert.equal(result.source, "local");
+  assert.equal(result.fallback, "limit");
+  assert.equal(result.retryAfter, 26);
+  assert.match(result.text, /ORBITAL/);
+});
+
+test("a configured free-tier key takes priority and stays on the server", async () => {
+  let sent;
+  const fetcher = async (url, init) => {
+    sent = { url, auth: init.headers.Authorization };
+    return Response.json({ choices: [{ message: { content: "Hi" } }] });
+  };
+  const status = await (await handleAPI(api("/api/status"), { GROQ_API_KEY: "k1", FREE_AI: "1" })).json();
+  assert.equal(status.provider.id, "groq");
+  assert.equal(JSON.stringify(status).includes("k1"), false);
+  await askWith({ lang: "en", ...say("What is ORBITAL?") }, { GEMINI_API_KEY: "g1", FREE_AI: "1" }, fetcher);
+  assert.match(sent.url, /generativelanguage/);
+  assert.equal(sent.auth, "Bearer g1");
+});

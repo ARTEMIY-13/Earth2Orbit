@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 const child = spawn(
   process.execPath,
-  ["server/index.mjs", "--dev", ...process.argv.slice(2)],
+  ["--env-file-if-exists=.env", "server/index.mjs", "--dev", ...process.argv.slice(2)],
   { stdio: "inherit", env: { ...process.env, NODE_USE_ENV_PROXY: "1" } },
 );
 for (const signal of ["SIGTERM", "SIGINT"])
